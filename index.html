@@ -3010,15 +3010,15 @@
                 const now = Date.now();
                 
                 if (gameMode === 'online') {
-                    // In online mode, G blocks for your player
-                    if (e.code === 'KeyG') {
+                    // In online mode, F blocks for your player
+                    if (e.code === 'KeyF') {
                         const localPlayer = playerId === 1 ? player1 : player2;
                         const opponent = playerId === 1 ? player2 : player1;
                         localPlayer.block(opponent, now);
                     }
                 } else {
-                    // Player 1 block (G key as backup, right-click is primary)
-                    if (e.code === 'KeyG') {
+                    // Player 1 block (F key as backup, right-click is primary)
+                    if (e.code === 'KeyF') {
                         player1.block(player2, now);
                     }
                     
