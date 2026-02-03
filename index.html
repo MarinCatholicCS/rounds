@@ -138,6 +138,136 @@
             box-shadow: 0 2px 0 #047857, 0 4px 20px rgba(16, 185, 129, 0.4);
         }
         
+        .menu-btn.customize {
+            background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 6px 0 #b45309, 0 10px 30px rgba(245, 158, 11, 0.4);
+        }
+        
+        .menu-btn.customize:hover {
+            box-shadow: 0 10px 0 #b45309, 0 16px 40px rgba(245, 158, 11, 0.6);
+        }
+        
+        .menu-btn.customize:active {
+            box-shadow: 0 2px 0 #b45309, 0 4px 20px rgba(245, 158, 11, 0.4);
+        }
+        
+        #customizeMenu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        #customizeMenu.hidden {
+            display: none;
+        }
+        
+        .customize-container {
+            display: flex;
+            gap: 50px;
+            margin: 20px 0;
+        }
+        
+        .customize-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            border: 2px solid #333;
+        }
+        
+        #previewCanvas {
+            border-radius: 8px;
+        }
+        
+        .preview-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 18px;
+            color: #666;
+            letter-spacing: 3px;
+            margin-top: 10px;
+        }
+        
+        .customize-options {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .accessory-category {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            border: 2px solid #333;
+        }
+        
+        .category-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px;
+            color: #f59e0b;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+        
+        .accessory-grid {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .accessory-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 2px solid #444;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 70px;
+        }
+        
+        .accessory-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #666;
+            transform: translateY(-2px);
+        }
+        
+        .accessory-item.selected {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.2);
+        }
+        
+        .accessory-icon {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .accessory-icon.none-icon {
+            color: #666;
+        }
+        
+        .accessory-item span {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 11px;
+            color: #aaa;
+            letter-spacing: 1px;
+        }
+        
+        .accessory-item.selected span {
+            color: #f59e0b;
+        }
+        
         .menu-btn.back-btn {
             background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
             box-shadow: 0 6px 0 #374151, 0 10px 30px rgba(107, 114, 128, 0.4);
@@ -561,6 +691,7 @@
             <button class="menu-btn" onclick="startGame('local')">LOCAL MATCH</button>
             <button class="menu-btn secondary" onclick="startGame('ai')">VS AI</button>
             <button class="menu-btn online" onclick="showOnlineMenu()">ONLINE</button>
+            <button class="menu-btn customize" onclick="showCustomizeMenu()">CUSTOMIZE</button>
             <div class="menu-controls">
                 <strong>PLAYER 1 (Orange)</strong><br>
                 <span>WASD</span> - Move &nbsp;|&nbsp; <span>Left Click</span> - Shoot &nbsp;|&nbsp; <span>Right Click / G</span> - Block<br><br>
@@ -599,6 +730,114 @@
             </div>
             <button class="menu-btn" id="readyBtn" onclick="toggleReady()">READY</button>
             <button class="menu-btn back-btn" onclick="leaveLobby()">LEAVE</button>
+        </div>
+        
+        <!-- Customize Menu -->
+        <div id="customizeMenu" class="hidden">
+            <div class="menu-title" style="font-size: 70px;">CUSTOMIZE</div>
+            
+            <div class="customize-container">
+                <!-- Player Preview -->
+                <div class="customize-preview">
+                    <canvas id="previewCanvas" width="200" height="250"></canvas>
+                    <div class="preview-label">PREVIEW</div>
+                </div>
+                
+                <!-- Accessory Options -->
+                <div class="customize-options">
+                    <div class="accessory-category">
+                        <div class="category-title">HAT</div>
+                        <div class="accessory-grid">
+                            <div class="accessory-item selected" data-type="hat" data-id="none" onclick="selectAccessory('hat', 'none')">
+                                <div class="accessory-icon none-icon">✕</div>
+                                <span>NONE</span>
+                            </div>
+                            <div class="accessory-item" data-type="hat" data-id="tophat" onclick="selectAccessory('hat', 'tophat')">
+                                <div class="accessory-icon">🎩</div>
+                                <span>TOP HAT</span>
+                            </div>
+                            <div class="accessory-item" data-type="hat" data-id="crown" onclick="selectAccessory('hat', 'crown')">
+                                <div class="accessory-icon">👑</div>
+                                <span>CROWN</span>
+                            </div>
+                            <div class="accessory-item" data-type="hat" data-id="beanie" onclick="selectAccessory('hat', 'beanie')">
+                                <div class="accessory-icon">🧢</div>
+                                <span>BEANIE</span>
+                            </div>
+                            <div class="accessory-item" data-type="hat" data-id="halo" onclick="selectAccessory('hat', 'halo')">
+                                <div class="accessory-icon">😇</div>
+                                <span>HALO</span>
+                            </div>
+                            <div class="accessory-item" data-type="hat" data-id="horns" onclick="selectAccessory('hat', 'horns')">
+                                <div class="accessory-icon">😈</div>
+                                <span>HORNS</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accessory-category">
+                        <div class="category-title">FACE</div>
+                        <div class="accessory-grid">
+                            <div class="accessory-item selected" data-type="face" data-id="none" onclick="selectAccessory('face', 'none')">
+                                <div class="accessory-icon none-icon">✕</div>
+                                <span>NONE</span>
+                            </div>
+                            <div class="accessory-item" data-type="face" data-id="sunglasses" onclick="selectAccessory('face', 'sunglasses')">
+                                <div class="accessory-icon">🕶️</div>
+                                <span>SHADES</span>
+                            </div>
+                            <div class="accessory-item" data-type="face" data-id="monocle" onclick="selectAccessory('face', 'monocle')">
+                                <div class="accessory-icon">🧐</div>
+                                <span>MONOCLE</span>
+                            </div>
+                            <div class="accessory-item" data-type="face" data-id="mask" onclick="selectAccessory('face', 'mask')">
+                                <div class="accessory-icon">🎭</div>
+                                <span>MASK</span>
+                            </div>
+                            <div class="accessory-item" data-type="face" data-id="eyepatch" onclick="selectAccessory('face', 'eyepatch')">
+                                <div class="accessory-icon">🏴‍☠️</div>
+                                <span>EYEPATCH</span>
+                            </div>
+                            <div class="accessory-item" data-type="face" data-id="blush" onclick="selectAccessory('face', 'blush')">
+                                <div class="accessory-icon">☺️</div>
+                                <span>BLUSH</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accessory-category">
+                        <div class="category-title">TRAIL</div>
+                        <div class="accessory-grid">
+                            <div class="accessory-item selected" data-type="trail" data-id="none" onclick="selectAccessory('trail', 'none')">
+                                <div class="accessory-icon none-icon">✕</div>
+                                <span>NONE</span>
+                            </div>
+                            <div class="accessory-item" data-type="trail" data-id="fire" onclick="selectAccessory('trail', 'fire')">
+                                <div class="accessory-icon">🔥</div>
+                                <span>FIRE</span>
+                            </div>
+                            <div class="accessory-item" data-type="trail" data-id="sparkle" onclick="selectAccessory('trail', 'sparkle')">
+                                <div class="accessory-icon">✨</div>
+                                <span>SPARKLE</span>
+                            </div>
+                            <div class="accessory-item" data-type="trail" data-id="smoke" onclick="selectAccessory('trail', 'smoke')">
+                                <div class="accessory-icon">💨</div>
+                                <span>SMOKE</span>
+                            </div>
+                            <div class="accessory-item" data-type="trail" data-id="hearts" onclick="selectAccessory('trail', 'hearts')">
+                                <div class="accessory-icon">💕</div>
+                                <span>HEARTS</span>
+                            </div>
+                            <div class="accessory-item" data-type="trail" data-id="rainbow" onclick="selectAccessory('trail', 'rainbow')">
+                                <div class="accessory-icon">🌈</div>
+                                <span>RAINBOW</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="menu-btn back-btn" onclick="hideCustomizeMenu()">BACK</button>
         </div>
         
         <!-- Card Selection -->
@@ -1004,6 +1243,382 @@
             roomRef.child('scores').set(newScores);
         }
         
+        // Customization state
+        let playerCustomization = {
+            hat: 'none',
+            face: 'none',
+            trail: 'none'
+        };
+        
+        let previewAnimPhase = 0;
+        let previewCanvas, previewCtx;
+        
+        // Show customize menu
+        function showCustomizeMenu() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('customizeMenu').classList.remove('hidden');
+            
+            // Setup preview canvas
+            previewCanvas = document.getElementById('previewCanvas');
+            previewCtx = previewCanvas.getContext('2d');
+            
+            // Start preview animation
+            requestAnimationFrame(updatePreview);
+        }
+        
+        // Hide customize menu
+        function hideCustomizeMenu() {
+            document.getElementById('customizeMenu').classList.add('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+        }
+        
+        // Select accessory
+        function selectAccessory(type, id) {
+            playerCustomization[type] = id;
+            
+            // Update UI
+            document.querySelectorAll(`.accessory-item[data-type="${type}"]`).forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.querySelector(`.accessory-item[data-type="${type}"][data-id="${id}"]`).classList.add('selected');
+        }
+        
+        // Draw accessory on player
+        function drawAccessories(ctx, x, y, radius, color, customization, facingRight, gunAngle) {
+            // Draw hat
+            if (customization.hat !== 'none') {
+                ctx.save();
+                switch (customization.hat) {
+                    case 'tophat':
+                        ctx.fillStyle = '#1a1a1a';
+                        ctx.fillRect(x - 15, y - radius - 25, 30, 5);
+                        ctx.fillRect(x - 10, y - radius - 45, 20, 22);
+                        ctx.fillStyle = '#4a2c2a';
+                        ctx.fillRect(x - 10, y - radius - 28, 20, 4);
+                        break;
+                    case 'crown':
+                        ctx.fillStyle = '#ffd700';
+                        ctx.beginPath();
+                        ctx.moveTo(x - 15, y - radius - 5);
+                        ctx.lineTo(x - 15, y - radius - 20);
+                        ctx.lineTo(x - 8, y - radius - 12);
+                        ctx.lineTo(x, y - radius - 25);
+                        ctx.lineTo(x + 8, y - radius - 12);
+                        ctx.lineTo(x + 15, y - radius - 20);
+                        ctx.lineTo(x + 15, y - radius - 5);
+                        ctx.closePath();
+                        ctx.fill();
+                        // Jewels
+                        ctx.fillStyle = '#ff0000';
+                        ctx.beginPath();
+                        ctx.arc(x, y - radius - 15, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'beanie':
+                        ctx.fillStyle = '#3b82f6';
+                        ctx.beginPath();
+                        ctx.arc(x, y - radius - 5, 18, Math.PI, 0);
+                        ctx.fill();
+                        ctx.fillStyle = '#1d4ed8';
+                        ctx.fillRect(x - 18, y - radius - 8, 36, 6);
+                        // Pom pom
+                        ctx.fillStyle = '#ef4444';
+                        ctx.beginPath();
+                        ctx.arc(x, y - radius - 22, 6, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'halo':
+                        ctx.strokeStyle = '#ffd700';
+                        ctx.lineWidth = 4;
+                        ctx.shadowColor = '#ffd700';
+                        ctx.shadowBlur = 15;
+                        ctx.beginPath();
+                        ctx.ellipse(x, y - radius - 18, 18, 6, 0, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                        break;
+                    case 'horns':
+                        ctx.fillStyle = '#8b0000';
+                        // Left horn
+                        ctx.beginPath();
+                        ctx.moveTo(x - 12, y - radius);
+                        ctx.quadraticCurveTo(x - 25, y - radius - 10, x - 18, y - radius - 30);
+                        ctx.quadraticCurveTo(x - 15, y - radius - 15, x - 8, y - radius - 5);
+                        ctx.fill();
+                        // Right horn
+                        ctx.beginPath();
+                        ctx.moveTo(x + 12, y - radius);
+                        ctx.quadraticCurveTo(x + 25, y - radius - 10, x + 18, y - radius - 30);
+                        ctx.quadraticCurveTo(x + 15, y - radius - 15, x + 8, y - radius - 5);
+                        ctx.fill();
+                        break;
+                }
+                ctx.restore();
+            }
+            
+            // Draw face accessories
+            if (customization.face !== 'none') {
+                ctx.save();
+                const eyeX = x + Math.cos(gunAngle) * 8;
+                const eyeY = y - 5 + Math.sin(gunAngle) * 4;
+                
+                switch (customization.face) {
+                    case 'sunglasses':
+                        ctx.fillStyle = '#1a1a1a';
+                        // Frame
+                        ctx.fillRect(x - 18, eyeY - 5, 36, 3);
+                        // Left lens
+                        ctx.beginPath();
+                        ctx.roundRect(x - 18, eyeY - 3, 14, 10, 2);
+                        ctx.fill();
+                        // Right lens
+                        ctx.beginPath();
+                        ctx.roundRect(x + 4, eyeY - 3, 14, 10, 2);
+                        ctx.fill();
+                        break;
+                    case 'monocle':
+                        ctx.strokeStyle = '#ffd700';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(x + 8, eyeY, 8, 0, Math.PI * 2);
+                        ctx.stroke();
+                        // Chain
+                        ctx.beginPath();
+                        ctx.moveTo(x + 8, eyeY + 8);
+                        ctx.quadraticCurveTo(x + 5, eyeY + 20, x - 5, eyeY + 25);
+                        ctx.stroke();
+                        break;
+                    case 'mask':
+                        ctx.fillStyle = '#1a1a1a';
+                        ctx.beginPath();
+                        ctx.ellipse(x, eyeY + 2, 20, 12, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Eye holes
+                        ctx.fillStyle = '#fff';
+                        ctx.beginPath();
+                        ctx.ellipse(x - 8, eyeY, 5, 4, 0, 0, Math.PI * 2);
+                        ctx.ellipse(x + 8, eyeY, 5, 4, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'eyepatch':
+                        ctx.fillStyle = '#1a1a1a';
+                        ctx.beginPath();
+                        ctx.ellipse(facingRight ? x + 8 : x - 8, eyeY, 8, 6, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Strap
+                        ctx.strokeStyle = '#1a1a1a';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(facingRight ? x + 15 : x - 15, eyeY - 3);
+                        ctx.lineTo(facingRight ? x + 20 : x - 20, eyeY - 10);
+                        ctx.moveTo(facingRight ? x + 15 : x - 15, eyeY + 3);
+                        ctx.lineTo(facingRight ? x + 20 : x - 20, eyeY + 10);
+                        ctx.stroke();
+                        break;
+                    case 'blush':
+                        ctx.fillStyle = 'rgba(255, 100, 100, 0.5)';
+                        ctx.beginPath();
+                        ctx.ellipse(x - 12, eyeY + 8, 6, 4, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.ellipse(x + 12, eyeY + 8, 6, 4, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                }
+                ctx.restore();
+            }
+        }
+        
+        // Spawn trail particles
+        function spawnTrailParticle(player) {
+            if (player.customization.trail === 'none') return;
+            if (Math.abs(player.vx) < 0.5 && Math.abs(player.vy) < 0.5) return;
+            if (Math.random() > 0.3) return;
+            
+            const trailX = player.x - player.vx * 0.5 + (Math.random() - 0.5) * 10;
+            const trailY = player.y + player.radius * 0.3 + (Math.random() - 0.5) * 10;
+            
+            switch (player.customization.trail) {
+                case 'fire':
+                    particles.push(new Particle(
+                        trailX, trailY,
+                        (Math.random() - 0.5) * 2,
+                        -Math.random() * 3 - 1,
+                        Math.random() > 0.5 ? '#ff4400' : '#ffaa00',
+                        4 + Math.random() * 4,
+                        20 + Math.random() * 15,
+                        'spark'
+                    ));
+                    break;
+                case 'sparkle':
+                    particles.push(new Particle(
+                        trailX, trailY,
+                        (Math.random() - 0.5) * 3,
+                        (Math.random() - 0.5) * 3,
+                        ['#fff', '#ffd700', '#00ffff'][Math.floor(Math.random() * 3)],
+                        2 + Math.random() * 3,
+                        15 + Math.random() * 10,
+                        'spark'
+                    ));
+                    break;
+                case 'smoke':
+                    particles.push(new Particle(
+                        trailX, trailY,
+                        (Math.random() - 0.5) * 1,
+                        -Math.random() * 1,
+                        '#888888',
+                        6 + Math.random() * 6,
+                        30 + Math.random() * 20,
+                        'spark'
+                    ));
+                    break;
+                case 'hearts':
+                    if (Math.random() > 0.7) {
+                        particles.push(new Particle(
+                            trailX, trailY,
+                            (Math.random() - 0.5) * 2,
+                            -Math.random() * 2 - 1,
+                            '#ff69b4',
+                            5 + Math.random() * 3,
+                            25 + Math.random() * 15,
+                            'spark'
+                        ));
+                    }
+                    break;
+                case 'rainbow':
+                    const hue = (Date.now() * 0.5) % 360;
+                    particles.push(new Particle(
+                        trailX, trailY,
+                        (Math.random() - 0.5) * 2,
+                        (Math.random() - 0.5) * 2,
+                        `hsl(${hue}, 100%, 60%)`,
+                        3 + Math.random() * 3,
+                        20 + Math.random() * 10,
+                        'spark'
+                    ));
+                    break;
+            }
+        }
+        
+        // Update preview animation
+        function updatePreview() {
+            if (document.getElementById('customizeMenu').classList.contains('hidden')) return;
+            
+            previewAnimPhase += 0.05;
+            
+            // Clear
+            previewCtx.fillStyle = '#0a0a0f';
+            previewCtx.fillRect(0, 0, 200, 250);
+            
+            // Draw preview player
+            const px = 100;
+            const py = 140;
+            const radius = 25;
+            const bobY = Math.sin(previewAnimPhase) * 3;
+            
+            // Legs
+            const legLength = 35;
+            const leftLegAngle = Math.sin(previewAnimPhase * 2) * 0.3;
+            const rightLegAngle = Math.sin(previewAnimPhase * 2 + Math.PI) * 0.3;
+            
+            previewCtx.lineCap = 'round';
+            previewCtx.lineWidth = 3;
+            previewCtx.strokeStyle = '#ff6b35';
+            
+            // Left leg
+            previewCtx.save();
+            previewCtx.translate(px - 8, py + radius * 0.5 + bobY);
+            previewCtx.rotate(leftLegAngle);
+            previewCtx.beginPath();
+            previewCtx.moveTo(0, 0);
+            previewCtx.lineTo(0, legLength);
+            previewCtx.stroke();
+            previewCtx.beginPath();
+            previewCtx.ellipse(0, legLength, 5, 3, 0, 0, Math.PI * 2);
+            previewCtx.fillStyle = '#ff6b35';
+            previewCtx.fill();
+            previewCtx.restore();
+            
+            // Right leg
+            previewCtx.save();
+            previewCtx.translate(px + 8, py + radius * 0.5 + bobY);
+            previewCtx.rotate(rightLegAngle);
+            previewCtx.beginPath();
+            previewCtx.moveTo(0, 0);
+            previewCtx.lineTo(0, legLength);
+            previewCtx.stroke();
+            previewCtx.beginPath();
+            previewCtx.ellipse(0, legLength, 5, 3, 0, 0, Math.PI * 2);
+            previewCtx.fillStyle = '#ff6b35';
+            previewCtx.fill();
+            previewCtx.restore();
+            
+            // Body
+            previewCtx.beginPath();
+            previewCtx.arc(px, py + bobY, radius, 0, Math.PI * 2);
+            previewCtx.fillStyle = '#ff6b35';
+            previewCtx.fill();
+            
+            // Body highlight
+            previewCtx.beginPath();
+            previewCtx.arc(px - radius * 0.3, py - radius * 0.3 + bobY, radius * 0.3, 0, Math.PI * 2);
+            previewCtx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            previewCtx.fill();
+            
+            // Eye
+            const gunAngle = Math.sin(previewAnimPhase * 0.5) * 0.3;
+            previewCtx.beginPath();
+            previewCtx.arc(px + 8, py - 5 + bobY, 5, 0, Math.PI * 2);
+            previewCtx.fillStyle = '#fff';
+            previewCtx.fill();
+            
+            // Pupil
+            previewCtx.beginPath();
+            previewCtx.arc(px + 8 + Math.cos(gunAngle) * 2, py - 5 + bobY + Math.sin(gunAngle) * 2, 2, 0, Math.PI * 2);
+            previewCtx.fillStyle = '#000';
+            previewCtx.fill();
+            
+            // Gun
+            previewCtx.save();
+            previewCtx.translate(px, py + bobY);
+            previewCtx.rotate(gunAngle);
+            previewCtx.fillStyle = '#333';
+            previewCtx.fillRect(radius - 5, -4, 25, 8);
+            previewCtx.fillStyle = '#555';
+            previewCtx.fillRect(radius - 5, -4, 25, 2);
+            previewCtx.restore();
+            
+            // Draw accessories
+            drawAccessories(previewCtx, px, py + bobY, radius, '#ff6b35', playerCustomization, true, gunAngle);
+            
+            // Trail preview particles
+            if (playerCustomization.trail !== 'none') {
+                previewCtx.globalAlpha = 0.6;
+                for (let i = 0; i < 5; i++) {
+                    const tx = px - 20 - i * 15 + Math.sin(previewAnimPhase + i) * 5;
+                    const ty = py + 10 + Math.cos(previewAnimPhase + i * 0.5) * 5 + bobY;
+                    const size = 4 - i * 0.5;
+                    
+                    let color;
+                    switch (playerCustomization.trail) {
+                        case 'fire': color = i % 2 ? '#ff4400' : '#ffaa00'; break;
+                        case 'sparkle': color = ['#fff', '#ffd700', '#00ffff'][i % 3]; break;
+                        case 'smoke': color = '#888888'; break;
+                        case 'hearts': color = '#ff69b4'; break;
+                        case 'rainbow': color = `hsl(${(Date.now() * 0.5 + i * 40) % 360}, 100%, 60%)`; break;
+                    }
+                    
+                    previewCtx.beginPath();
+                    previewCtx.arc(tx, ty, size, 0, Math.PI * 2);
+                    previewCtx.fillStyle = color;
+                    previewCtx.fill();
+                }
+                previewCtx.globalAlpha = 1;
+            }
+            
+            requestAnimationFrame(updatePreview);
+        }
+        
         // Physics constants
         const GRAVITY = 0.5;
         const FRICTION = 0.92;
@@ -1360,6 +1975,9 @@
                 this.legPhase = 0;
                 this.bodyShake = { x: 0, y: 0, targetX: 0, targetY: 0 };
                 this.lastVx = 0;
+                
+                // Customization (Player 1 uses global, Player 2 has default)
+                this.customization = id === 1 ? playerCustomization : { hat: 'none', face: 'none', trail: 'none' };
             }
             
             reset() {
@@ -1834,6 +2452,12 @@
                     ctx.stroke();
                 }
                 
+                // Draw accessories
+                drawAccessories(ctx, drawX, drawY, this.radius, this.color, this.customization, this.facingRight, gunAngle);
+                
+                // Spawn trail particles
+                spawnTrailParticle(this);
+                
                 ctx.restore();
             }
         }
@@ -2208,6 +2832,9 @@
             player2 = new Player(1000, 460, '#4361ee', {
                 left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', shoot: 'Period', block: 'Slash'
             }, 2);
+            
+            // Apply player 1's customization
+            player1.customization = { ...playerCustomization };
         }
         
         // AI Logic
