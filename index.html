@@ -4,6 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ROUNDS</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB_t0aqBd6HG-F2ncaarCQyApQoFN9yR48",
+            authDomain: "rounds-mc.firebaseapp.com",
+            databaseURL: "https://rounds-mc-default-rtdb.firebaseio.com",
+            projectId: "rounds-mc",
+            storageBucket: "rounds-mc.firebasestorage.app",
+            messagingSenderId: "594850049392",
+            appId: "1:594850049392:web:8b883a924fe2428113f3b5",
+            measurementId: "G-H95MHFNZ4Y"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap');
         
@@ -107,6 +123,161 @@
         
         .menu-btn.secondary:active {
             box-shadow: 0 2px 0 #240046, 0 4px 20px rgba(67, 97, 238, 0.4);
+        }
+        
+        .menu-btn.online {
+            background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 6px 0 #047857, 0 10px 30px rgba(16, 185, 129, 0.4);
+        }
+        
+        .menu-btn.online:hover {
+            box-shadow: 0 10px 0 #047857, 0 16px 40px rgba(16, 185, 129, 0.6);
+        }
+        
+        .menu-btn.online:active {
+            box-shadow: 0 2px 0 #047857, 0 4px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        .menu-btn.back-btn {
+            background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
+            box-shadow: 0 6px 0 #374151, 0 10px 30px rgba(107, 114, 128, 0.4);
+            margin-top: 30px;
+            padding: 12px 50px;
+            font-size: 24px;
+        }
+        
+        .menu-btn.back-btn:hover {
+            box-shadow: 0 10px 0 #374151, 0 16px 40px rgba(107, 114, 128, 0.6);
+        }
+        
+        #onlineMenu, #lobby {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        #onlineMenu.hidden, #lobby.hidden {
+            display: none;
+        }
+        
+        .room-input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .room-input {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 36px;
+            padding: 15px 30px;
+            background: #1a1a2e;
+            border: 3px solid #4361ee;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+            letter-spacing: 8px;
+            width: 220px;
+            outline: none;
+            text-transform: uppercase;
+        }
+        
+        .room-input:focus {
+            border-color: #6b8cff;
+            box-shadow: 0 0 20px rgba(67, 97, 238, 0.5);
+        }
+        
+        .room-input::placeholder {
+            color: #666;
+            letter-spacing: 4px;
+        }
+        
+        .room-code {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 72px;
+            color: #10b981;
+            letter-spacing: 15px;
+            text-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
+            margin: 20px 0;
+        }
+        
+        .lobby-status {
+            color: #888;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        
+        .lobby-players {
+            display: flex;
+            gap: 60px;
+            margin-bottom: 40px;
+        }
+        
+        .lobby-player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 20px 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 2px solid #333;
+        }
+        
+        .lobby-player.p1 {
+            border-color: #ff6b35;
+        }
+        
+        .lobby-player.p2 {
+            border-color: #4361ee;
+        }
+        
+        .lobby-player.connected {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .lobby-player-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #333;
+        }
+        
+        .lobby-player.p1 .lobby-player-icon {
+            background: #ff6b35;
+        }
+        
+        .lobby-player.p2 .lobby-player-icon {
+            background: #4361ee;
+        }
+        
+        .lobby-player.p2:not(.connected) .lobby-player-icon {
+            background: #333;
+        }
+        
+        .lobby-player span {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+        
+        .ready-status {
+            font-size: 14px !important;
+            color: #888 !important;
+        }
+        
+        .ready-status.ready {
+            color: #10b981 !important;
         }
         
         .menu-controls {
@@ -389,12 +560,45 @@
             <div class="menu-title">ROUNDS</div>
             <button class="menu-btn" onclick="startGame('local')">LOCAL MATCH</button>
             <button class="menu-btn secondary" onclick="startGame('ai')">VS AI</button>
+            <button class="menu-btn online" onclick="showOnlineMenu()">ONLINE</button>
             <div class="menu-controls">
                 <strong>PLAYER 1 (Orange)</strong><br>
                 <span>WASD</span> - Move &nbsp;|&nbsp; <span>Left Click</span> - Shoot &nbsp;|&nbsp; <span>Right Click / G</span> - Block<br><br>
                 <strong>PLAYER 2 (Blue)</strong><br>
                 <span>Arrow Keys</span> - Move &nbsp;|&nbsp; <span>.</span> - Shoot &nbsp;|&nbsp; <span>/</span> - Block
             </div>
+        </div>
+        
+        <!-- Online Menu -->
+        <div id="onlineMenu" class="hidden">
+            <div class="menu-title" style="font-size: 80px;">ONLINE</div>
+            <button class="menu-btn" onclick="createRoom()">CREATE ROOM</button>
+            <div class="room-input-container">
+                <input type="text" id="roomCodeInput" class="room-input" placeholder="ROOM CODE" maxlength="6">
+                <button class="menu-btn secondary" onclick="joinRoom()">JOIN ROOM</button>
+            </div>
+            <button class="menu-btn back-btn" onclick="hideOnlineMenu()">BACK</button>
+        </div>
+        
+        <!-- Lobby -->
+        <div id="lobby" class="hidden">
+            <div class="menu-title" style="font-size: 60px;">ROOM</div>
+            <div class="room-code" id="displayRoomCode">XXXX</div>
+            <div class="lobby-status" id="lobbyStatus">Waiting for opponent...</div>
+            <div class="lobby-players">
+                <div class="lobby-player p1" id="lobbyP1">
+                    <div class="lobby-player-icon"></div>
+                    <span>PLAYER 1</span>
+                    <span class="ready-status" id="p1Ready">NOT READY</span>
+                </div>
+                <div class="lobby-player p2" id="lobbyP2">
+                    <div class="lobby-player-icon"></div>
+                    <span>PLAYER 2</span>
+                    <span class="ready-status" id="p2Ready">WAITING...</span>
+                </div>
+            </div>
+            <button class="menu-btn" id="readyBtn" onclick="toggleReady()">READY</button>
+            <button class="menu-btn back-btn" onclick="leaveLobby()">LEAVE</button>
         </div>
         
         <!-- Card Selection -->
@@ -445,6 +649,360 @@
         let currentRound = 1;
         let roundWinner = null;
         let cardSelectPlayer = 1;
+        
+        // Online multiplayer state
+        let roomCode = null;
+        let playerId = null; // 1 or 2
+        let roomRef = null;
+        let isHost = false;
+        let isReady = false;
+        let opponentReady = false;
+        let lastSyncTime = 0;
+        const SYNC_RATE = 1000 / 30; // 30 times per second
+        
+        // Generate random room code
+        function generateRoomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 4; i++) {
+                code += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return code;
+        }
+        
+        // Show online menu
+        function showOnlineMenu() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('onlineMenu').classList.remove('hidden');
+        }
+        
+        // Hide online menu
+        function hideOnlineMenu() {
+            document.getElementById('onlineMenu').classList.add('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+        }
+        
+        // Create room
+        async function createRoom() {
+            roomCode = generateRoomCode();
+            isHost = true;
+            playerId = 1;
+            
+            // Select random map
+            selectRandomMap();
+            
+            roomRef = database.ref('rooms/' + roomCode);
+            
+            // Set up room data
+            await roomRef.set({
+                host: playerId,
+                mapIndex: MAPS.indexOf(currentMap),
+                state: 'waiting',
+                players: {
+                    1: { ready: false, connected: true }
+                },
+                round: 1,
+                scores: { 1: 0, 2: 0 }
+            });
+            
+            // Clean up room on disconnect
+            roomRef.onDisconnect().remove();
+            
+            // Listen for changes
+            setupRoomListeners();
+            
+            // Show lobby
+            showLobby();
+        }
+        
+        // Join room
+        async function joinRoom() {
+            const code = document.getElementById('roomCodeInput').value.toUpperCase().trim();
+            if (code.length !== 4) {
+                alert('Please enter a valid 4-character room code');
+                return;
+            }
+            
+            roomCode = code;
+            isHost = false;
+            playerId = 2;
+            
+            roomRef = database.ref('rooms/' + roomCode);
+            
+            // Check if room exists
+            const snapshot = await roomRef.once('value');
+            if (!snapshot.exists()) {
+                alert('Room not found!');
+                return;
+            }
+            
+            const roomData = snapshot.val();
+            if (roomData.players && roomData.players[2]) {
+                alert('Room is full!');
+                return;
+            }
+            
+            // Load map from host
+            currentMap = MAPS[roomData.mapIndex];
+            platforms = currentMap.platforms;
+            
+            // Join room
+            await roomRef.child('players/2').set({ ready: false, connected: true });
+            
+            // Clean up on disconnect
+            roomRef.child('players/2').onDisconnect().remove();
+            
+            // Listen for changes
+            setupRoomListeners();
+            
+            // Show lobby
+            showLobby();
+        }
+        
+        // Setup room listeners
+        function setupRoomListeners() {
+            // Listen for player changes
+            roomRef.child('players').on('value', (snapshot) => {
+                const players = snapshot.val();
+                if (!players) return;
+                
+                // Update lobby UI
+                const p1Connected = players[1] && players[1].connected;
+                const p2Connected = players[2] && players[2].connected;
+                
+                document.getElementById('lobbyP1').classList.toggle('connected', p1Connected);
+                document.getElementById('lobbyP2').classList.toggle('connected', p2Connected);
+                
+                const p1ReadyEl = document.getElementById('p1Ready');
+                const p2ReadyEl = document.getElementById('p2Ready');
+                
+                if (players[1]) {
+                    p1ReadyEl.textContent = players[1].ready ? 'READY' : 'NOT READY';
+                    p1ReadyEl.classList.toggle('ready', players[1].ready);
+                }
+                
+                if (players[2]) {
+                    p2ReadyEl.textContent = players[2].ready ? 'READY' : 'NOT READY';
+                    p2ReadyEl.classList.toggle('ready', players[2].ready);
+                    document.getElementById('lobbyStatus').textContent = 'Opponent connected!';
+                } else {
+                    p2ReadyEl.textContent = 'WAITING...';
+                    p2ReadyEl.classList.remove('ready');
+                    document.getElementById('lobbyStatus').textContent = 'Waiting for opponent...';
+                }
+                
+                // Check if both ready
+                if (players[1] && players[2] && players[1].ready && players[2].ready) {
+                    if (isHost) {
+                        roomRef.child('state').set('starting');
+                    }
+                }
+                
+                // Track opponent ready state
+                const opponentId = playerId === 1 ? 2 : 1;
+                opponentReady = players[opponentId] && players[opponentId].ready;
+            });
+            
+            // Listen for game state changes
+            roomRef.child('state').on('value', (snapshot) => {
+                const state = snapshot.val();
+                if (state === 'starting') {
+                    startOnlineGame();
+                } else if (state === 'cardSelect') {
+                    // Handle card selection phase
+                }
+            });
+            
+            // Listen for opponent position updates
+            roomRef.child('gameState').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data || gameState !== 'playing') return;
+                
+                const opponentId = playerId === 1 ? 2 : 1;
+                const opponentData = data['player' + opponentId];
+                
+                if (opponentData) {
+                    const opponent = playerId === 1 ? player2 : player1;
+                    opponent.x = opponentData.x || opponent.x;
+                    opponent.y = opponentData.y || opponent.y;
+                    opponent.vx = opponentData.vx || 0;
+                    opponent.vy = opponentData.vy || 0;
+                    opponent.facingRight = opponentData.facingRight;
+                    opponent.health = opponentData.health || opponent.health;
+                    opponent.blocking = opponentData.blocking || false;
+                    opponent.reloading = opponentData.reloading || false;
+                    opponent.ammo = opponentData.ammo !== undefined ? opponentData.ammo : opponent.ammo;
+                }
+            });
+            
+            // Listen for bullets from opponent
+            roomRef.child('bullets').on('child_added', (snapshot) => {
+                const bulletData = snapshot.val();
+                if (!bulletData || bulletData.owner === playerId) return;
+                
+                const owner = bulletData.owner === 1 ? player1 : player2;
+                const bullet = new Bullet(
+                    bulletData.x,
+                    bulletData.y,
+                    bulletData.vx,
+                    bulletData.vy,
+                    owner
+                );
+                bullets.push(bullet);
+                
+                // Remove from database
+                snapshot.ref.remove();
+            });
+            
+            // Listen for round/score updates
+            roomRef.child('scores').on('value', (snapshot) => {
+                const scores = snapshot.val();
+                if (scores) {
+                    player1.score = scores[1] || 0;
+                    player2.score = scores[2] || 0;
+                    updateHUD();
+                }
+            });
+            
+            // Listen for card selections from opponent
+            roomRef.child('cardPick').on('value', (snapshot) => {
+                const pick = snapshot.val();
+                if (!pick || pick.player === playerId) return;
+                
+                // Apply opponent's card
+                const opponent = pick.player === 1 ? player1 : player2;
+                const card = CARDS.find(c => c.name === pick.cardName);
+                if (card) {
+                    card.effect(opponent);
+                    opponent.cards.push(card.name);
+                    opponent.ammo = opponent.maxAmmo;
+                }
+            });
+        }
+        
+        // Show lobby
+        function showLobby() {
+            document.getElementById('onlineMenu').classList.add('hidden');
+            document.getElementById('lobby').classList.remove('hidden');
+            document.getElementById('displayRoomCode').textContent = roomCode;
+            
+            // Reset ready state
+            isReady = false;
+            document.getElementById('readyBtn').textContent = 'READY';
+        }
+        
+        // Toggle ready state
+        function toggleReady() {
+            isReady = !isReady;
+            document.getElementById('readyBtn').textContent = isReady ? 'NOT READY' : 'READY';
+            roomRef.child('players/' + playerId + '/ready').set(isReady);
+        }
+        
+        // Leave lobby
+        function leaveLobby() {
+            if (roomRef) {
+                roomRef.child('players/' + playerId).remove();
+                if (isHost) {
+                    roomRef.remove();
+                }
+                roomRef.off();
+                roomRef = null;
+            }
+            
+            roomCode = null;
+            playerId = null;
+            isHost = false;
+            isReady = false;
+            
+            document.getElementById('lobby').classList.add('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+        }
+        
+        // Start online game
+        function startOnlineGame() {
+            document.getElementById('lobby').classList.add('hidden');
+            
+            gameMode = 'online';
+            initPlayers();
+            currentRound = 1;
+            player1.score = 0;
+            player2.score = 0;
+            iranModeUnlocked = false;
+            cheatProgress = 0;
+            
+            updateHUD();
+            startRound();
+        }
+        
+        // Sync local player state to Firebase
+        function syncPlayerState() {
+            if (gameMode !== 'online' || !roomRef || gameState !== 'playing') return;
+            
+            const now = Date.now();
+            if (now - lastSyncTime < SYNC_RATE) return;
+            lastSyncTime = now;
+            
+            const localPlayer = playerId === 1 ? player1 : player2;
+            
+            roomRef.child('gameState/player' + playerId).set({
+                x: localPlayer.x,
+                y: localPlayer.y,
+                vx: localPlayer.vx,
+                vy: localPlayer.vy,
+                facingRight: localPlayer.facingRight,
+                health: localPlayer.health,
+                blocking: localPlayer.blocking,
+                reloading: localPlayer.reloading,
+                ammo: localPlayer.ammo
+            });
+        }
+        
+        // Send bullet to Firebase
+        function sendBullet(bullet) {
+            if (gameMode !== 'online' || !roomRef) return;
+            
+            roomRef.child('bullets').push({
+                owner: playerId,
+                x: bullet.x,
+                y: bullet.y,
+                vx: bullet.vx,
+                vy: bullet.vy
+            });
+        }
+        
+        // Sync damage to opponent
+        function syncDamage(targetPlayerId, damage) {
+            if (gameMode !== 'online' || !roomRef) return;
+            
+            roomRef.child('damage').push({
+                target: targetPlayerId,
+                amount: damage,
+                timestamp: Date.now()
+            });
+        }
+        
+        // Handle online card selection
+        function selectCardOnline(card) {
+            if (gameMode !== 'online' || !roomRef) return;
+            
+            roomRef.child('cardPick').set({
+                player: playerId,
+                cardName: card.name,
+                timestamp: Date.now()
+            });
+        }
+        
+        // End round online
+        function endRoundOnline(winner) {
+            if (gameMode !== 'online' || !roomRef || !isHost) return;
+            
+            const newScores = {
+                1: player1.score + (winner === 1 ? 1 : 0),
+                2: player2.score + (winner === 2 ? 1 : 0)
+            };
+            
+            roomRef.child('scores').set(newScores);
+        }
         
         // Physics constants
         const GRAVITY = 0.5;
@@ -599,18 +1157,133 @@
             }
         ];
         
-        // Platform definitions
-        const platforms = [
-            { x: 0, y: 650, w: 1200, h: 50 },      // Ground
-            { x: 100, y: 520, w: 200, h: 20 },     // Left lower
-            { x: 900, y: 520, w: 200, h: 20 },     // Right lower
-            { x: 450, y: 450, w: 300, h: 20 },     // Center
-            { x: 50, y: 350, w: 150, h: 20 },      // Left mid
-            { x: 1000, y: 350, w: 150, h: 20 },    // Right mid
-            { x: 500, y: 280, w: 200, h: 20 },     // Center high
-            { x: 200, y: 200, w: 150, h: 20 },     // Left high
-            { x: 850, y: 200, w: 150, h: 20 },     // Right high
+        // Map definitions with different layouts and color schemes
+        const MAPS = [
+            {
+                name: "Classic",
+                bgColor: '#0a0a0f',
+                platformColor: '#1a1a2e',
+                platformHighlight: '#2a2a4e',
+                platforms: [
+                    { x: 0, y: 650, w: 1200, h: 50 },      // Ground
+                    { x: 100, y: 520, w: 200, h: 20 },     // Left lower
+                    { x: 900, y: 520, w: 200, h: 20 },     // Right lower
+                    { x: 450, y: 450, w: 300, h: 20 },     // Center
+                    { x: 50, y: 350, w: 150, h: 20 },      // Left mid
+                    { x: 1000, y: 350, w: 150, h: 20 },    // Right mid
+                    { x: 500, y: 280, w: 200, h: 20 },     // Center high
+                    { x: 200, y: 200, w: 150, h: 20 },     // Left high
+                    { x: 850, y: 200, w: 150, h: 20 },     // Right high
+                ]
+            },
+            {
+                name: "Neon",
+                bgColor: '#0d0221',
+                platformColor: '#541388',
+                platformHighlight: '#ff00ff',
+                platforms: [
+                    { x: 0, y: 650, w: 1200, h: 50 },      // Ground
+                    { x: 50, y: 500, w: 150, h: 15 },
+                    { x: 250, y: 400, w: 150, h: 15 },
+                    { x: 500, y: 550, w: 200, h: 15 },
+                    { x: 800, y: 400, w: 150, h: 15 },
+                    { x: 1000, y: 500, w: 150, h: 15 },
+                    { x: 400, y: 300, w: 100, h: 15 },
+                    { x: 700, y: 300, w: 100, h: 15 },
+                    { x: 550, y: 180, w: 100, h: 15 },
+                    { x: 100, y: 250, w: 120, h: 15 },
+                    { x: 980, y: 250, w: 120, h: 15 },
+                ]
+            },
+            {
+                name: "Forest",
+                bgColor: '#0a1f0a',
+                platformColor: '#2d4a2d',
+                platformHighlight: '#4a7a4a',
+                platforms: [
+                    { x: 0, y: 650, w: 1200, h: 50 },      // Ground
+                    { x: 0, y: 450, w: 180, h: 25 },
+                    { x: 1020, y: 450, w: 180, h: 25 },
+                    { x: 280, y: 520, w: 200, h: 20 },
+                    { x: 720, y: 520, w: 200, h: 20 },
+                    { x: 500, y: 420, w: 200, h: 25 },
+                    { x: 350, y: 300, w: 130, h: 20 },
+                    { x: 720, y: 300, w: 130, h: 20 },
+                    { x: 520, y: 200, w: 160, h: 20 },
+                    { x: 150, y: 200, w: 100, h: 20 },
+                    { x: 950, y: 200, w: 100, h: 20 },
+                ]
+            },
+            {
+                name: "Lava",
+                bgColor: '#1a0a0a',
+                platformColor: '#4a1a1a',
+                platformHighlight: '#ff4400',
+                platforms: [
+                    { x: 0, y: 650, w: 400, h: 50 },       // Left ground
+                    { x: 800, y: 650, w: 400, h: 50 },     // Right ground
+                    { x: 450, y: 600, w: 300, h: 20 },     // Center low
+                    { x: 100, y: 480, w: 180, h: 20 },
+                    { x: 920, y: 480, w: 180, h: 20 },
+                    { x: 350, y: 400, w: 150, h: 20 },
+                    { x: 700, y: 400, w: 150, h: 20 },
+                    { x: 500, y: 300, w: 200, h: 20 },
+                    { x: 200, y: 250, w: 120, h: 20 },
+                    { x: 880, y: 250, w: 120, h: 20 },
+                    { x: 550, y: 150, w: 100, h: 20 },
+                ]
+            },
+            {
+                name: "Ice",
+                bgColor: '#0a1a2a',
+                platformColor: '#1a4a6a',
+                platformHighlight: '#6af0ff',
+                platforms: [
+                    { x: 0, y: 650, w: 1200, h: 50 },      // Ground
+                    { x: 200, y: 550, w: 250, h: 15 },
+                    { x: 750, y: 550, w: 250, h: 15 },
+                    { x: 0, y: 420, w: 200, h: 15 },
+                    { x: 1000, y: 420, w: 200, h: 15 },
+                    { x: 450, y: 480, w: 300, h: 15 },
+                    { x: 300, y: 350, w: 180, h: 15 },
+                    { x: 720, y: 350, w: 180, h: 15 },
+                    { x: 500, y: 250, w: 200, h: 15 },
+                    { x: 100, y: 200, w: 150, h: 15 },
+                    { x: 950, y: 200, w: 150, h: 15 },
+                    { x: 550, y: 120, w: 100, h: 15 },
+                ]
+            },
+            {
+                name: "Sunset",
+                bgColor: '#1a0a1a',
+                platformColor: '#4a2a3a',
+                platformHighlight: '#ff6b35',
+                platforms: [
+                    { x: 0, y: 650, w: 1200, h: 50 },      // Ground
+                    { x: 50, y: 520, w: 120, h: 20 },
+                    { x: 220, y: 440, w: 120, h: 20 },
+                    { x: 400, y: 520, w: 150, h: 20 },
+                    { x: 650, y: 520, w: 150, h: 20 },
+                    { x: 860, y: 440, w: 120, h: 20 },
+                    { x: 1030, y: 520, w: 120, h: 20 },
+                    { x: 300, y: 320, w: 150, h: 20 },
+                    { x: 525, y: 380, w: 150, h: 20 },
+                    { x: 750, y: 320, w: 150, h: 20 },
+                    { x: 525, y: 220, w: 150, h: 20 },
+                    { x: 150, y: 180, w: 100, h: 20 },
+                    { x: 950, y: 180, w: 100, h: 20 },
+                ]
+            }
         ];
+        
+        let currentMap = MAPS[0];
+        let platforms = currentMap.platforms;
+        
+        // Select random map
+        function selectRandomMap() {
+            currentMap = MAPS[Math.floor(Math.random() * MAPS.length)];
+            platforms = currentMap.platforms;
+        }
         
         // Player class
         class Player {
@@ -1709,19 +2382,28 @@
             if (gameState === 'playing') {
                 const now = Date.now();
                 
-                // Player 1 block (G key as backup, right-click is primary)
-                if (e.code === 'KeyG') {
-                    player1.block(player2, now);
-                }
-                
-                // Player 2 shooting (local only)
-                if (gameMode === 'local') {
-                    if (e.code === 'Period') {
-                        const newBullets = player2.shoot(player1, now);
-                        bullets.push(...newBullets);
+                if (gameMode === 'online') {
+                    // In online mode, G blocks for your player
+                    if (e.code === 'KeyG') {
+                        const localPlayer = playerId === 1 ? player1 : player2;
+                        const opponent = playerId === 1 ? player2 : player1;
+                        localPlayer.block(opponent, now);
                     }
-                    if (e.code === 'Slash') {
-                        player2.block(player1, now);
+                } else {
+                    // Player 1 block (G key as backup, right-click is primary)
+                    if (e.code === 'KeyG') {
+                        player1.block(player2, now);
+                    }
+                    
+                    // Player 2 shooting (local only)
+                    if (gameMode === 'local') {
+                        if (e.code === 'Period') {
+                            const newBullets = player2.shoot(player1, now);
+                            bullets.push(...newBullets);
+                        }
+                        if (e.code === 'Slash') {
+                            player2.block(player1, now);
+                        }
                     }
                 }
             }
@@ -1738,21 +2420,40 @@
             mouse.y = e.clientY - rect.top;
         });
         
-        // Mouse click to shoot (Player 1)
+        // Mouse click to shoot (Player 1 in local/AI, or your player in online)
         canvas.addEventListener('mousedown', (e) => {
             if (gameState === 'playing' && e.button === 0) {
                 const now = Date.now();
-                const newBullets = player1.shoot(player2, now, mouse);
-                bullets.push(...newBullets);
+                
+                if (gameMode === 'online') {
+                    // In online mode, only control your assigned player
+                    const localPlayer = playerId === 1 ? player1 : player2;
+                    const opponent = playerId === 1 ? player2 : player1;
+                    const newBullets = localPlayer.shoot(opponent, now, mouse);
+                    bullets.push(...newBullets);
+                    
+                    // Send bullets to Firebase
+                    newBullets.forEach(b => sendBullet(b));
+                } else {
+                    const newBullets = player1.shoot(player2, now, mouse);
+                    bullets.push(...newBullets);
+                }
             }
         });
         
-        // Right click to block (Player 1)
+        // Right click to block
         canvas.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             if (gameState === 'playing') {
                 const now = Date.now();
-                player1.block(player2, now);
+                
+                if (gameMode === 'online') {
+                    const localPlayer = playerId === 1 ? player1 : player2;
+                    const opponent = playerId === 1 ? player2 : player1;
+                    localPlayer.block(opponent, now);
+                } else {
+                    player1.block(player2, now);
+                }
             }
         });
         
@@ -1800,8 +2501,13 @@
             
             document.getElementById('cardSelect').classList.remove('active');
             
+            // Sync card selection online
+            if (gameMode === 'online') {
+                selectCardOnline(card);
+                startRound();
+            }
             // If player 1 just picked and it's local mode, let player 2 pick
-            if (playerNum === 1 && gameMode === 'local') {
+            else if (playerNum === 1 && gameMode === 'local') {
                 setTimeout(() => showCardSelect(2), 300);
             } else if (playerNum === 1 && gameMode === 'ai') {
                 // AI picks random card
@@ -1820,6 +2526,9 @@
         function startGame(mode) {
             gameMode = mode;
             document.getElementById('mainMenu').classList.add('hidden');
+            
+            // Select a random map
+            selectRandomMap();
             
             initPlayers();
             currentRound = 1;
@@ -1842,19 +2551,19 @@
             
             document.getElementById('hud').classList.add('active');
             
-            // Show round announcement
+            // Show round announcement with map name
             const announce = document.getElementById('roundAnnounce');
-            announce.textContent = `ROUND ${currentRound}`;
+            announce.innerHTML = `ROUND ${currentRound}<br><span style="font-size: 32px; color: ${currentMap.platformHighlight}">${currentMap.name.toUpperCase()}</span>`;
             announce.classList.add('show');
             
             setTimeout(() => {
                 announce.textContent = 'FIGHT!';
-            }, 1000);
+            }, 1200);
             
             setTimeout(() => {
                 announce.classList.remove('show');
                 gameState = 'playing';
-            }, 1500);
+            }, 1700);
         }
         
         function endRound(winner) {
@@ -1878,7 +2587,30 @@
                 setTimeout(() => {
                     announce.classList.remove('show');
                     currentRound++;
-                    showCardSelect(winner);
+                    
+                    // In online mode, only the winner picks a card (their local client)
+                    if (gameMode === 'online') {
+                        if (winner === playerId) {
+                            showCardSelect(playerId);
+                        } else {
+                            // Wait for opponent to pick card, then start round
+                            const announce = document.getElementById('roundAnnounce');
+                            announce.textContent = 'OPPONENT PICKING CARD...';
+                            announce.classList.add('show');
+                            
+                            // Listen for opponent's card pick to start round
+                            const cardListener = roomRef.child('cardPick').on('value', (snapshot) => {
+                                const pick = snapshot.val();
+                                if (pick && pick.player === winner) {
+                                    roomRef.child('cardPick').off('value', cardListener);
+                                    announce.classList.remove('show');
+                                    startRound();
+                                }
+                            });
+                        }
+                    } else {
+                        showCardSelect(winner);
+                    }
                 }, 1500);
             }
         }
@@ -1898,11 +2630,29 @@
         function returnToMenu() {
             document.getElementById('winnerScreen').classList.remove('active');
             document.getElementById('mainMenu').classList.remove('hidden');
+            
+            // Clean up online connection
+            if (gameMode === 'online' && roomRef) {
+                roomRef.child('players/' + playerId).remove();
+                if (isHost) {
+                    roomRef.remove();
+                }
+                roomRef.off();
+                roomRef = null;
+                roomCode = null;
+                playerId = null;
+                isHost = false;
+            }
+            
             gameState = 'menu';
         }
         
         function rematch() {
             document.getElementById('winnerScreen').classList.remove('active');
+            
+            // Select a new random map
+            selectRandomMap();
+            
             player1.fullReset();
             player2.fullReset();
             currentRound = 1;
@@ -1925,18 +2675,17 @@
         function gameLoop() {
             const now = Date.now();
             
-            // Clear canvas
-            ctx.fillStyle = '#0a0a0f';
+            // Clear canvas with map background color
+            ctx.fillStyle = currentMap.bgColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Draw platforms
-            ctx.fillStyle = '#1a1a2e';
+            // Draw platforms with map colors
             for (const plat of platforms) {
+                ctx.fillStyle = currentMap.platformColor;
                 ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
                 // Platform edge highlight
-                ctx.fillStyle = '#2a2a4e';
+                ctx.fillStyle = currentMap.platformHighlight;
                 ctx.fillRect(plat.x, plat.y, plat.w, 3);
-                ctx.fillStyle = '#1a1a2e';
             }
             
             if (gameState === 'playing') {
@@ -1946,9 +2695,24 @@
                 // AI update
                 updateAI(now);
                 
-                // Update players
-                player1.update(keys, player2, now);
-                player2.update(keys, player1, now);
+                // Update players - in online mode, only update local player with input
+                if (gameMode === 'online') {
+                    const localPlayer = playerId === 1 ? player1 : player2;
+                    const opponent = playerId === 1 ? player2 : player1;
+                    
+                    // Local player uses WASD
+                    const onlineKeys = {
+                        [localPlayer.controls.left]: keys['KeyA'],
+                        [localPlayer.controls.right]: keys['KeyD'],
+                        [localPlayer.controls.up]: keys['KeyW']
+                    };
+                    
+                    localPlayer.update(onlineKeys, opponent, now);
+                    opponent.update({}, localPlayer, now); // Opponent controlled by network
+                } else {
+                    player1.update(keys, player2, now);
+                    player2.update(keys, player1, now);
+                }
                 
                 // Update bullets
                 for (let i = bullets.length - 1; i >= 0; i--) {
@@ -2025,9 +2789,16 @@
                 
                 // Check for round end
                 if (player1.health <= 0) {
+                    if (gameMode === 'online') endRoundOnline(2);
                     endRound(2);
                 } else if (player2.health <= 0) {
+                    if (gameMode === 'online') endRoundOnline(1);
                     endRound(1);
+                }
+                
+                // Sync state for online mode
+                if (gameMode === 'online') {
+                    syncPlayerState();
                 }
                 
                 updateHUD();
@@ -2039,8 +2810,20 @@
                 particles.forEach(p => p.draw());
                 explosions.forEach(e => e.draw());
                 bullets.forEach(b => b.draw());
-                player1.draw(mouse);
-                player2.draw();
+                
+                // In online mode, pass mouse to the local player
+                if (gameMode === 'online') {
+                    if (playerId === 1) {
+                        player1.draw(mouse);
+                        player2.draw();
+                    } else {
+                        player1.draw();
+                        player2.draw(mouse);
+                    }
+                } else {
+                    player1.draw(mouse);
+                    player2.draw();
+                }
                 
                 // Draw crosshair for Player 1
                 if (gameState === 'playing') {
