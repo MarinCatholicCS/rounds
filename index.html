@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROUNDS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0f;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 1200px;
+            height: 700px;
+        }
+        
+        canvas {
+            display: block;
+            border-radius: 8px;
+            box-shadow: 0 0 60px rgba(255, 100, 50, 0.15);
+        }
+        
+        /* Main Menu */
+        #mainMenu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        #mainMenu.hidden {
+            display: none;
+        }
+        
+        .menu-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 140px;
+            color: #fff;
+            text-shadow: 0 0 40px rgba(255, 100, 50, 0.8),
+                         0 0 80px rgba(255, 50, 50, 0.5);
+            letter-spacing: 20px;
+            margin-bottom: 60px;
+            animation: titlePulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes titlePulse {
+            0%, 100% { text-shadow: 0 0 40px rgba(255, 100, 50, 0.8), 0 0 80px rgba(255, 50, 50, 0.5); }
+            50% { text-shadow: 0 0 60px rgba(255, 100, 50, 1), 0 0 120px rgba(255, 50, 50, 0.7); }
+        }
+        
+        .menu-btn {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 36px;
+            padding: 18px 80px;
+            margin: 12px;
+            background: linear-gradient(180deg, #ff6b35 0%, #e63946 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            letter-spacing: 4px;
+            transition: all 0.2s ease;
+            box-shadow: 0 6px 0 #a62639, 0 10px 30px rgba(230, 57, 70, 0.4);
+        }
+        
+        .menu-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 0 #a62639, 0 16px 40px rgba(230, 57, 70, 0.6);
+        }
+        
+        .menu-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #a62639, 0 4px 20px rgba(230, 57, 70, 0.4);
+        }
+        
+        .menu-btn.secondary {
+            background: linear-gradient(180deg, #4361ee 0%, #3a0ca3 100%);
+            box-shadow: 0 6px 0 #240046, 0 10px 30px rgba(67, 97, 238, 0.4);
+        }
+        
+        .menu-btn.secondary:hover {
+            box-shadow: 0 10px 0 #240046, 0 16px 40px rgba(67, 97, 238, 0.6);
+        }
+        
+        .menu-btn.secondary:active {
+            box-shadow: 0 2px 0 #240046, 0 4px 20px rgba(67, 97, 238, 0.4);
+        }
+        
+        .menu-controls {
+            margin-top: 50px;
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            line-height: 2;
+        }
+        
+        .menu-controls span {
+            color: #ff6b35;
+            font-weight: 600;
+        }
+        
+        /* Card Selection */
+        #cardSelect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 15, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 90;
+        }
+        
+        #cardSelect.active {
+            display: flex;
+        }
+        
+        .card-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 48px;
+            margin-bottom: 10px;
+            letter-spacing: 6px;
+        }
+        
+        .card-title.p1 { color: #ff6b35; }
+        .card-title.p2 { color: #4361ee; }
+        
+        .card-subtitle {
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 18px;
+        }
+        
+        .cards-container {
+            display: flex;
+            gap: 30px;
+            perspective: 1000px;
+        }
+        
+        .card {
+            width: 220px;
+            height: 300px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid #333;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #ff6b35, #e63946);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-10px) rotateX(5deg);
+            border-color: #ff6b35;
+            box-shadow: 0 20px 40px rgba(255, 107, 53, 0.3);
+        }
+        
+        .card:hover::before {
+            opacity: 1;
+        }
+        
+        .card-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 26px;
+            color: #fff;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        
+        .card-desc {
+            color: #aaa;
+            font-size: 13px;
+            line-height: 1.5;
+            flex: 1;
+        }
+        
+        .card-stats {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #333;
+        }
+        
+        .stat {
+            font-size: 11px;
+            margin: 3px 0;
+        }
+        
+        .stat.positive { color: #4ade80; }
+        .stat.negative { color: #f87171; }
+        
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: none;
+        }
+        
+        #hud.active {
+            display: block;
+        }
+        
+        .player-hud {
+            position: absolute;
+            top: 20px;
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .player-hud.p1 {
+            left: 20px;
+            border-left: 4px solid #ff6b35;
+        }
+        
+        .player-hud.p2 {
+            right: 20px;
+            border-right: 4px solid #4361ee;
+        }
+        
+        .player-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+        }
+        
+        .player-name.p1 { color: #ff6b35; }
+        .player-name.p2 { color: #4361ee; }
+        
+        .health-bar {
+            width: 200px;
+            height: 12px;
+            background: #333;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .health-fill {
+            height: 100%;
+            transition: width 0.2s ease;
+            border-radius: 6px;
+        }
+        
+        .health-fill.p1 {
+            background: linear-gradient(90deg, #ff6b35, #e63946);
+        }
+        
+        .health-fill.p2 {
+            background: linear-gradient(90deg, #4361ee, #3a0ca3);
+        }
+        
+        .ammo-display {
+            font-size: 14px;
+            color: #888;
+        }
+        
+        .ammo-display span {
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        /* Score Display */
+        .score-display {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 48px;
+        }
+        
+        .score-p1 { color: #ff6b35; }
+        .score-p2 { color: #4361ee; }
+        .score-divider { color: #444; }
+        
+        /* Round Announcement */
+        #roundAnnounce {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 80px;
+            color: #fff;
+            text-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
+            letter-spacing: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        #roundAnnounce.show {
+            opacity: 1;
+        }
+        
+        /* Winner Screen */
+        #winnerScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 15, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 95;
+        }
+        
+        #winnerScreen.active {
+            display: flex;
+        }
+        
+        .winner-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 100px;
+            letter-spacing: 10px;
+            margin-bottom: 40px;
+        }
+        
+        .winner-text.p1 {
+            color: #ff6b35;
+            text-shadow: 0 0 60px rgba(255, 107, 53, 0.8);
+        }
+        
+        .winner-text.p2 {
+            color: #4361ee;
+            text-shadow: 0 0 60px rgba(67, 97, 238, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1200" height="700"></canvas>
+        
+        <!-- Main Menu -->
+        <div id="mainMenu">
+            <div class="menu-title">ROUNDS</div>
+            <button class="menu-btn" onclick="startGame('local')">LOCAL MATCH</button>
+            <button class="menu-btn secondary" onclick="startGame('ai')">VS AI</button>
+            <div class="menu-controls">
+                <strong>PLAYER 1 (Orange)</strong><br>
+                <span>WASD</span> - Move &nbsp;|&nbsp; <span>F</span> - Shoot &nbsp;|&nbsp; <span>G</span> - Block<br><br>
+                <strong>PLAYER 2 (Blue)</strong><br>
+                <span>Arrow Keys</span> - Move &nbsp;|&nbsp; <span>.</span> - Shoot &nbsp;|&nbsp; <span>/</span> - Block
+            </div>
+        </div>
+        
+        <!-- Card Selection -->
+        <div id="cardSelect">
+            <div class="card-title p1" id="cardPlayerTitle">PLAYER 1 - PICK A CARD</div>
+            <div class="card-subtitle">Choose your upgrade</div>
+            <div class="cards-container" id="cardsContainer"></div>
+        </div>
+        
+        <!-- HUD -->
+        <div id="hud">
+            <div class="player-hud p1">
+                <div class="player-name p1">PLAYER 1</div>
+                <div class="health-bar"><div class="health-fill p1" id="health1"></div></div>
+                <div class="ammo-display">AMMO: <span id="ammo1">3/3</span></div>
+            </div>
+            <div class="player-hud p2">
+                <div class="player-name p2">PLAYER 2</div>
+                <div class="health-bar"><div class="health-fill p2" id="health2"></div></div>
+                <div class="ammo-display">AMMO: <span id="ammo2">3/3</span></div>
+            </div>
+            <div class="score-display">
+                <span class="score-p1" id="score1">0</span>
+                <span class="score-divider">-</span>
+                <span class="score-p2" id="score2">0</span>
+            </div>
+        </div>
+        
+        <!-- Round Announcement -->
+        <div id="roundAnnounce"></div>
+        
+        <!-- Winner Screen -->
+        <div id="winnerScreen">
+            <div class="winner-text" id="winnerText">PLAYER 1 WINS</div>
+            <button class="menu-btn" onclick="returnToMenu()">MAIN MENU</button>
+            <button class="menu-btn secondary" onclick="rematch()">REMATCH</button>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameMode = 'local';
+        let gameState = 'menu'; // menu, playing, cardSelect, roundEnd, gameOver
+        let currentRound = 1;
+        let roundWinner = null;
+        let cardSelectPlayer = 1;
+        
+        // Physics constants
+        const GRAVITY = 0.5;
+        const FRICTION = 0.85;
+        const AIR_FRICTION = 0.99;
+        
+        // Card definitions
+        const CARDS = [
+            {
+                name: "Big Bullet",
+                desc: "Bigger bullets deal more impact",
+                stats: ["+50% bullet size", "+0.25s reload time"],
+                effect: (p) => { p.bulletSize *= 1.5; p.reloadTime += 0.25; }
+            },
+            {
+                name: "Barrage",
+                desc: "Fire many bullets at once",
+                stats: ["+4 bullets", "+5 ammo", "-70% damage", "+0.25s reload"],
+                effect: (p) => { p.bulletsPerShot += 4; p.maxAmmo += 5; p.damage *= 0.3; p.reloadTime += 0.25; }
+            },
+            {
+                name: "Bouncy",
+                desc: "Bullets bounce off walls",
+                stats: ["+2 bounces", "+25% damage", "+0.25s reload"],
+                effect: (p) => { p.bulletBounces += 2; p.damage *= 1.25; p.reloadTime += 0.25; }
+            },
+            {
+                name: "Homing",
+                desc: "Bullets seek enemies",
+                stats: ["Homing bullets", "-25% damage", "-50% fire rate"],
+                effect: (p) => { p.homing = true; p.damage *= 0.75; p.fireRate *= 1.5; }
+            },
+            {
+                name: "Explosive",
+                desc: "Bullets explode on impact",
+                stats: ["Explosive rounds", "-50% fire rate"],
+                effect: (p) => { p.explosive = true; p.fireRate *= 1.5; }
+            },
+            {
+                name: "Quick Reload",
+                desc: "Reload much faster",
+                stats: ["-70% reload time"],
+                effect: (p) => { p.reloadTime *= 0.3; }
+            },
+            {
+                name: "Tank",
+                desc: "Become a bullet sponge",
+                stats: ["+100% HP", "-25% fire rate", "+0.5s reload"],
+                effect: (p) => { p.maxHealth *= 2; p.health = p.maxHealth; p.fireRate *= 1.25; p.reloadTime += 0.5; }
+            },
+            {
+                name: "Glass Cannon",
+                desc: "High risk, high reward",
+                stats: ["+100% damage", "-50% HP"],
+                effect: (p) => { p.damage *= 2; p.maxHealth *= 0.5; p.health = Math.min(p.health, p.maxHealth); }
+            },
+            {
+                name: "Spray",
+                desc: "Bullet hose mode",
+                stats: ["+500% fire rate", "+12 ammo", "-75% damage"],
+                effect: (p) => { p.fireRate *= 0.2; p.maxAmmo += 12; p.damage *= 0.25; }
+            },
+            {
+                name: "Fastball",
+                desc: "Speedy projectiles",
+                stats: ["+150% bullet speed", "-50% fire rate"],
+                effect: (p) => { p.bulletSpeed *= 2.5; p.fireRate *= 1.5; }
+            },
+            {
+                name: "Buckshot",
+                desc: "Shotgun spread",
+                stats: ["+4 bullets", "Wide spread", "-60% damage"],
+                effect: (p) => { p.bulletsPerShot += 4; p.spread = 0.4; p.damage *= 0.4; }
+            },
+            {
+                name: "Leech",
+                desc: "Steal enemy health",
+                stats: ["+50% life steal", "+30% HP"],
+                effect: (p) => { p.lifeSteal = 0.5; p.maxHealth *= 1.3; p.health = p.maxHealth; }
+            },
+            {
+                name: "Chase",
+                desc: "Fast when aggressive",
+                stats: ["+60% move speed toward enemy", "+30% HP"],
+                effect: (p) => { p.chaseBonus = 0.6; p.maxHealth *= 1.3; p.health = p.maxHealth; }
+            },
+            {
+                name: "Poison",
+                desc: "Damage over time",
+                stats: ["Poison bullets", "+70% damage", "-1 bullet"],
+                effect: (p) => { p.poison = true; p.damage *= 1.7; p.maxAmmo = Math.max(1, p.maxAmmo - 1); }
+            },
+            {
+                name: "Teleport",
+                desc: "Blocking teleports you forward",
+                stats: ["Teleport on block", "-30% block cooldown"],
+                effect: (p) => { p.teleportBlock = true; p.blockCooldown *= 0.7; }
+            },
+            {
+                name: "Shield Charge",
+                desc: "Blocking launches you forward",
+                stats: ["Charge on block"],
+                effect: (p) => { p.shieldCharge = true; }
+            },
+            {
+                name: "Shock Wave",
+                desc: "Blocking pushes enemies away",
+                stats: ["Knockback on block", "+50% HP"],
+                effect: (p) => { p.shockwaveBlock = true; p.maxHealth *= 1.5; p.health = p.maxHealth; }
+            },
+            {
+                name: "Thruster",
+                desc: "Bullets push enemies back",
+                stats: ["Knockback bullets"],
+                effect: (p) => { p.thruster = true; }
+            },
+            {
+                name: "Trickster",
+                desc: "Bounces deal more damage",
+                stats: ["+80% damage per bounce", "+2 bounces", "-20% base damage"],
+                effect: (p) => { p.trickster = true; p.bulletBounces += 2; p.damage *= 0.8; }
+            },
+            {
+                name: "Huge",
+                desc: "Become a bigger target... but tanky",
+                stats: ["+80% HP", "+30% size"],
+                effect: (p) => { p.maxHealth *= 1.8; p.health = p.maxHealth; p.radius *= 1.3; }
+            },
+            {
+                name: "Defender",
+                desc: "Block more often",
+                stats: ["-30% block cooldown", "+30% HP"],
+                effect: (p) => { p.blockCooldown *= 0.7; p.maxHealth *= 1.3; p.health = p.maxHealth; }
+            },
+            {
+                name: "Phoenix",
+                desc: "Get a second chance",
+                stats: ["Respawn once", "-35% HP"],
+                effect: (p) => { p.phoenix = true; p.maxHealth *= 0.65; p.health = p.maxHealth; }
+            },
+            {
+                name: "Grow",
+                desc: "Bullets gain damage over distance",
+                stats: ["Growing bullets"],
+                effect: (p) => { p.growingBullets = true; }
+            },
+            {
+                name: "Drill Ammo",
+                desc: "Bullets pass through walls briefly",
+                stats: ["Wall penetration"],
+                effect: (p) => { p.drillAmmo = true; }
+            }
+        ];
+        
+        // Platform definitions
+        const platforms = [
+            { x: 0, y: 650, w: 1200, h: 50 },      // Ground
+            { x: 100, y: 520, w: 200, h: 20 },     // Left lower
+            { x: 900, y: 520, w: 200, h: 20 },     // Right lower
+            { x: 450, y: 450, w: 300, h: 20 },     // Center
+            { x: 50, y: 350, w: 150, h: 20 },      // Left mid
+            { x: 1000, y: 350, w: 150, h: 20 },    // Right mid
+            { x: 500, y: 280, w: 200, h: 20 },     // Center high
+            { x: 200, y: 200, w: 150, h: 20 },     // Left high
+            { x: 850, y: 200, w: 150, h: 20 },     // Right high
+        ];
+        
+        // Player class
+        class Player {
+            constructor(x, y, color, controls, id) {
+                this.id = id;
+                this.x = x;
+                this.y = y;
+                this.spawnX = x;
+                this.spawnY = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.radius = 25;
+                this.color = color;
+                this.controls = controls;
+                
+                // Base stats
+                this.maxHealth = 100;
+                this.health = 100;
+                this.damage = 25;
+                this.bulletSpeed = 15;
+                this.bulletSize = 8;
+                this.fireRate = 0.3;
+                this.reloadTime = 1.5;
+                this.maxAmmo = 3;
+                this.ammo = 3;
+                this.bulletsPerShot = 1;
+                this.bulletBounces = 0;
+                this.spread = 0.05;
+                this.blockCooldown = 2;
+                
+                // Special abilities
+                this.homing = false;
+                this.explosive = false;
+                this.lifeSteal = 0;
+                this.poison = false;
+                this.teleportBlock = false;
+                this.shieldCharge = false;
+                this.shockwaveBlock = false;
+                this.thruster = false;
+                this.trickster = false;
+                this.phoenix = false;
+                this.phoenixUsed = false;
+                this.growingBullets = false;
+                this.drillAmmo = false;
+                this.chaseBonus = 0;
+                
+                // State
+                this.grounded = false;
+                this.facingRight = id === 1;
+                this.lastShot = 0;
+                this.reloading = false;
+                this.reloadStart = 0;
+                this.blocking = false;
+                this.blockTime = 0;
+                this.lastBlock = -10;
+                this.shieldCharging = false;
+                this.shieldChargeVx = 0;
+                
+                // Effects
+                this.poisoned = false;
+                this.poisonDamage = 0;
+                this.poisonEnd = 0;
+                
+                // Cards collected
+                this.cards = [];
+                
+                // Score
+                this.score = 0;
+            }
+            
+            reset() {
+                this.x = this.spawnX;
+                this.y = this.spawnY;
+                this.vx = 0;
+                this.vy = 0;
+                this.health = this.maxHealth;
+                this.ammo = this.maxAmmo;
+                this.reloading = false;
+                this.blocking = false;
+                this.lastShot = 0;
+                this.lastBlock = -10;
+                this.poisoned = false;
+                this.phoenixUsed = false;
+                this.shieldCharging = false;
+            }
+            
+            fullReset() {
+                this.radius = 25;
+                this.maxHealth = 100;
+                this.health = 100;
+                this.damage = 25;
+                this.bulletSpeed = 15;
+                this.bulletSize = 8;
+                this.fireRate = 0.3;
+                this.reloadTime = 1.5;
+                this.maxAmmo = 3;
+                this.ammo = 3;
+                this.bulletsPerShot = 1;
+                this.bulletBounces = 0;
+                this.spread = 0.05;
+                this.blockCooldown = 2;
+                this.homing = false;
+                this.explosive = false;
+                this.lifeSteal = 0;
+                this.poison = false;
+                this.teleportBlock = false;
+                this.shieldCharge = false;
+                this.shockwaveBlock = false;
+                this.thruster = false;
+                this.trickster = false;
+                this.phoenix = false;
+                this.phoenixUsed = false;
+                this.growingBullets = false;
+                this.drillAmmo = false;
+                this.chaseBonus = 0;
+                this.cards = [];
+                this.score = 0;
+                this.reset();
+            }
+            
+            update(keys, other, now) {
+                // Poison damage
+                if (this.poisoned && now < this.poisonEnd) {
+                    this.health -= this.poisonDamage / 60;
+                } else {
+                    this.poisoned = false;
+                }
+                
+                // Shield charge momentum
+                if (this.shieldCharging) {
+                    this.vx = this.shieldChargeVx;
+                    if (Math.abs(this.shieldChargeVx) < 1) {
+                        this.shieldCharging = false;
+                    }
+                    this.shieldChargeVx *= 0.95;
+                }
+                
+                // Movement
+                let moveSpeed = 0.8;
+                let jumpForce = -14;
+                
+                // Chase bonus
+                if (this.chaseBonus > 0 && other) {
+                    const toEnemy = other.x - this.x;
+                    if ((toEnemy > 0 && keys[this.controls.right]) || (toEnemy < 0 && keys[this.controls.left])) {
+                        moveSpeed *= (1 + this.chaseBonus);
+                    }
+                }
+                
+                if (!this.shieldCharging) {
+                    if (keys[this.controls.left]) {
+                        this.vx -= moveSpeed;
+                        this.facingRight = false;
+                    }
+                    if (keys[this.controls.right]) {
+                        this.vx += moveSpeed;
+                        this.facingRight = true;
+                    }
+                    if (keys[this.controls.up] && this.grounded) {
+                        this.vy = jumpForce;
+                        this.grounded = false;
+                    }
+                }
+                
+                // Physics
+                this.vy += GRAVITY;
+                this.vx *= this.grounded ? FRICTION : AIR_FRICTION;
+                
+                // Apply velocity
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Platform collision
+                this.grounded = false;
+                for (const plat of platforms) {
+                    if (this.collidesPlatform(plat)) {
+                        // Landing on top
+                        if (this.vy > 0 && this.y - this.vy <= plat.y + this.radius) {
+                            this.y = plat.y - this.radius;
+                            this.vy = 0;
+                            this.grounded = true;
+                        }
+                        // Hitting bottom
+                        else if (this.vy < 0 && this.y - this.vy >= plat.y + plat.h - this.radius) {
+                            this.y = plat.y + plat.h + this.radius;
+                            this.vy = 0;
+                        }
+                        // Side collision
+                        else if (this.vx > 0) {
+                            this.x = plat.x - this.radius;
+                            this.vx = 0;
+                        } else if (this.vx < 0) {
+                            this.x = plat.x + plat.w + this.radius;
+                            this.vx = 0;
+                        }
+                    }
+                }
+                
+                // World bounds
+                if (this.x < this.radius) { this.x = this.radius; this.vx = 0; }
+                if (this.x > canvas.width - this.radius) { this.x = canvas.width - this.radius; this.vx = 0; }
+                if (this.y < this.radius) { this.y = this.radius; this.vy = 0; }
+                if (this.y > canvas.height - this.radius) {
+                    this.y = canvas.height - this.radius;
+                    this.vy = 0;
+                    this.grounded = true;
+                }
+                
+                // Reloading
+                if (this.reloading) {
+                    if (now - this.reloadStart >= this.reloadTime * 1000) {
+                        this.ammo = this.maxAmmo;
+                        this.reloading = false;
+                    }
+                }
+                
+                // Auto reload when empty
+                if (this.ammo <= 0 && !this.reloading) {
+                    this.reloading = true;
+                    this.reloadStart = now;
+                }
+                
+                // Blocking
+                if (this.blocking && now - this.blockTime > 200) {
+                    this.blocking = false;
+                }
+            }
+            
+            collidesPlatform(plat) {
+                return this.x + this.radius > plat.x &&
+                       this.x - this.radius < plat.x + plat.w &&
+                       this.y + this.radius > plat.y &&
+                       this.y - this.radius < plat.y + plat.h;
+            }
+            
+            shoot(other, now) {
+                if (this.ammo <= 0 || this.reloading) return [];
+                if (now - this.lastShot < this.fireRate * 1000) return [];
+                
+                this.lastShot = now;
+                this.ammo--;
+                
+                const bullets = [];
+                const baseAngle = this.facingRight ? 0 : Math.PI;
+                
+                for (let i = 0; i < this.bulletsPerShot; i++) {
+                    let angle = baseAngle;
+                    if (this.bulletsPerShot > 1) {
+                        const spreadRange = this.spread * (this.bulletsPerShot - 1);
+                        angle += (i / (this.bulletsPerShot - 1) - 0.5) * spreadRange * 2;
+                    }
+                    angle += (Math.random() - 0.5) * this.spread;
+                    
+                    bullets.push(new Bullet(
+                        this.x + Math.cos(baseAngle) * (this.radius + 5),
+                        this.y,
+                        Math.cos(angle) * this.bulletSpeed,
+                        Math.sin(angle) * this.bulletSpeed,
+                        this
+                    ));
+                }
+                
+                return bullets;
+            }
+            
+            block(other, now) {
+                if (now - this.lastBlock < this.blockCooldown * 1000) return;
+                
+                this.blocking = true;
+                this.blockTime = now;
+                this.lastBlock = now;
+                
+                // Teleport block
+                if (this.teleportBlock) {
+                    const dir = this.facingRight ? 1 : -1;
+                    this.x += dir * 200;
+                    this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+                }
+                
+                // Shield charge
+                if (this.shieldCharge) {
+                    const dir = this.facingRight ? 1 : -1;
+                    this.shieldCharging = true;
+                    this.shieldChargeVx = dir * 20;
+                }
+                
+                // Shockwave
+                if (this.shockwaveBlock && other) {
+                    const dx = other.x - this.x;
+                    const dy = other.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 200) {
+                        const force = (200 - dist) / 10;
+                        other.vx += (dx / dist) * force;
+                        other.vy += (dy / dist) * force - 5;
+                    }
+                }
+            }
+            
+            takeDamage(amount, source) {
+                if (this.blocking) return false;
+                
+                this.health -= amount;
+                
+                // Life steal for attacker
+                if (source && source.owner && source.owner.lifeSteal > 0) {
+                    source.owner.health = Math.min(source.owner.maxHealth, 
+                        source.owner.health + amount * source.owner.lifeSteal);
+                }
+                
+                // Phoenix respawn
+                if (this.health <= 0 && this.phoenix && !this.phoenixUsed) {
+                    this.phoenixUsed = true;
+                    this.health = this.maxHealth * 0.5;
+                    this.x = this.spawnX;
+                    this.y = this.spawnY;
+                    this.vx = 0;
+                    this.vy = 0;
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            draw() {
+                ctx.save();
+                
+                // Shield effect when blocking
+                if (this.blocking) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius + 15, 0, Math.PI * 2);
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 4;
+                    ctx.globalAlpha = 0.6;
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                }
+                
+                // Body
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                
+                // Face direction indicator
+                const eyeX = this.x + (this.facingRight ? 8 : -8);
+                ctx.beginPath();
+                ctx.arc(eyeX, this.y - 5, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+                
+                // Gun
+                ctx.fillStyle = '#333';
+                const gunX = this.x + (this.facingRight ? this.radius : -this.radius - 15);
+                ctx.fillRect(gunX, this.y - 4, 20, 8);
+                
+                // Health bar above head
+                const barWidth = 50;
+                const barHeight = 6;
+                const barX = this.x - barWidth / 2;
+                const barY = this.y - this.radius - 20;
+                
+                ctx.fillStyle = '#333';
+                ctx.fillRect(barX, barY, barWidth, barHeight);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
+                
+                // Poison effect
+                if (this.poisoned) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius + 5, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 2;
+                    ctx.globalAlpha = 0.5;
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                }
+                
+                // Reload indicator
+                if (this.reloading) {
+                    const reloadProgress = (Date.now() - this.reloadStart) / (this.reloadTime * 1000);
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius + 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * reloadProgress);
+                    ctx.strokeStyle = '#ffff00';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+            }
+        }
+        
+        // Bullet class
+        class Bullet {
+            constructor(x, y, vx, vy, owner) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.owner = owner;
+                this.radius = owner.bulletSize;
+                this.damage = owner.damage;
+                this.bounces = owner.bulletBounces;
+                this.bouncesLeft = this.bounces;
+                this.homing = owner.homing;
+                this.explosive = owner.explosive;
+                this.poison = owner.poison;
+                this.thruster = owner.thruster;
+                this.trickster = owner.trickster;
+                this.growingBullets = owner.growingBullets;
+                this.drillAmmo = owner.drillAmmo;
+                this.drillTime = 10;
+                this.distanceTraveled = 0;
+                this.alive = true;
+                this.bounceCount = 0;
+            }
+            
+            update(target) {
+                // Homing
+                if (this.homing && target) {
+                    const dx = target.x - this.x;
+                    const dy = target.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist > 0) {
+                        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                        this.vx += (dx / dist) * 0.5;
+                        this.vy += (dy / dist) * 0.5;
+                        const newSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                        this.vx = (this.vx / newSpeed) * speed;
+                        this.vy = (this.vy / newSpeed) * speed;
+                    }
+                }
+                
+                // Growing bullets
+                if (this.growingBullets) {
+                    this.distanceTraveled += Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                    this.damage = this.owner.damage * (1 + this.distanceTraveled / 500);
+                    this.radius = this.owner.bulletSize * (1 + this.distanceTraveled / 1000);
+                }
+                
+                // Apply gravity (slight)
+                this.vy += 0.1;
+                
+                // Move
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Drill ammo countdown
+                if (this.drillAmmo && this.drillTime > 0) {
+                    this.drillTime--;
+                }
+                
+                // Wall collision
+                const canDrill = this.drillAmmo && this.drillTime > 0;
+                
+                if (this.x < this.radius || this.x > canvas.width - this.radius) {
+                    if (!canDrill) {
+                        if (this.bouncesLeft > 0) {
+                            this.vx *= -1;
+                            this.bouncesLeft--;
+                            this.bounceCount++;
+                            if (this.x < this.radius) this.x = this.radius;
+                            if (this.x > canvas.width - this.radius) this.x = canvas.width - this.radius;
+                        } else {
+                            this.alive = false;
+                        }
+                    }
+                }
+                
+                if (this.y < this.radius || this.y > canvas.height - this.radius) {
+                    if (!canDrill) {
+                        if (this.bouncesLeft > 0) {
+                            this.vy *= -1;
+                            this.bouncesLeft--;
+                            this.bounceCount++;
+                            if (this.y < this.radius) this.y = this.radius;
+                            if (this.y > canvas.height - this.radius) this.y = canvas.height - this.radius;
+                        } else {
+                            this.alive = false;
+                        }
+                    }
+                }
+                
+                // Platform collision
+                if (!canDrill) {
+                    for (const plat of platforms) {
+                        if (this.x + this.radius > plat.x &&
+                            this.x - this.radius < plat.x + plat.w &&
+                            this.y + this.radius > plat.y &&
+                            this.y - this.radius < plat.y + plat.h) {
+                            
+                            if (this.bouncesLeft > 0) {
+                                // Determine which side was hit
+                                const overlapLeft = (this.x + this.radius) - plat.x;
+                                const overlapRight = (plat.x + plat.w) - (this.x - this.radius);
+                                const overlapTop = (this.y + this.radius) - plat.y;
+                                const overlapBottom = (plat.y + plat.h) - (this.y - this.radius);
+                                
+                                const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+                                
+                                if (minOverlap === overlapTop || minOverlap === overlapBottom) {
+                                    this.vy *= -1;
+                                } else {
+                                    this.vx *= -1;
+                                }
+                                
+                                this.bouncesLeft--;
+                                this.bounceCount++;
+                            } else {
+                                this.alive = false;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                
+                if (this.explosive) {
+                    ctx.fillStyle = '#ff4444';
+                } else if (this.poison) {
+                    ctx.fillStyle = '#44ff44';
+                } else if (this.homing) {
+                    ctx.fillStyle = '#ff44ff';
+                } else {
+                    ctx.fillStyle = this.owner.color;
+                }
+                ctx.fill();
+                
+                // Trail effect
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - this.vx * 2, this.y - this.vy * 2);
+                ctx.strokeStyle = this.owner.color;
+                ctx.lineWidth = this.radius * 0.8;
+                ctx.globalAlpha = 0.5;
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+            
+            getDamage() {
+                let dmg = this.damage;
+                if (this.trickster) {
+                    dmg *= (1 + this.bounceCount * 0.8);
+                }
+                return dmg;
+            }
+        }
+        
+        // Explosion class
+        class Explosion {
+            constructor(x, y, radius, damage, owner) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.maxRadius = radius;
+                this.damage = damage;
+                this.owner = owner;
+                this.time = 0;
+                this.maxTime = 20;
+            }
+            
+            update() {
+                this.time++;
+                return this.time < this.maxTime;
+            }
+            
+            draw() {
+                const progress = this.time / this.maxTime;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.maxRadius * (0.5 + progress * 0.5), 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 100, 50, ${1 - progress})`;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.maxRadius * 0.5 * (1 - progress), 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 200, ${1 - progress})`;
+                ctx.fill();
+            }
+        }
+        
+        // Game objects
+        let player1, player2;
+        let bullets = [];
+        let explosions = [];
+        let keys = {};
+        let aiTarget = { x: 600, y: 300 };
+        let aiState = 'approach';
+        let aiStateTime = 0;
+        
+        // Initialize players
+        function initPlayers() {
+            player1 = new Player(200, 500, '#ff6b35', {
+                left: 'KeyA', right: 'KeyD', up: 'KeyW', shoot: 'KeyF', block: 'KeyG'
+            }, 1);
+            
+            player2 = new Player(1000, 500, '#4361ee', {
+                left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', shoot: 'Period', block: 'Slash'
+            }, 2);
+        }
+        
+        // AI Logic
+        function updateAI(now) {
+            if (gameMode !== 'ai') return;
+            
+            const ai = player2;
+            const target = player1;
+            
+            aiStateTime++;
+            
+            // State machine
+            const dx = target.x - ai.x;
+            const dy = target.y - ai.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            // Check for incoming bullets
+            let dangerousBullet = null;
+            for (const bullet of bullets) {
+                if (bullet.owner !== ai) {
+                    const bDist = Math.sqrt((bullet.x - ai.x) ** 2 + (bullet.y - ai.y) ** 2);
+                    if (bDist < 150) {
+                        dangerousBullet = bullet;
+                        break;
+                    }
+                }
+            }
+            
+            // Block incoming bullets
+            if (dangerousBullet && Math.random() < 0.05) {
+                ai.block(target, now);
+            }
+            
+            // Movement
+            if (aiState === 'approach' || dist > 400) {
+                if (dx > 50) keys['ArrowRight'] = true;
+                else if (dx < -50) keys['ArrowLeft'] = true;
+                
+                if (aiStateTime > 60) {
+                    aiState = Math.random() < 0.5 ? 'strafe' : 'attack';
+                    aiStateTime = 0;
+                }
+            } else if (aiState === 'strafe') {
+                keys[Math.random() < 0.5 ? 'ArrowLeft' : 'ArrowRight'] = true;
+                if (aiStateTime > 30) {
+                    aiState = 'attack';
+                    aiStateTime = 0;
+                }
+            } else if (aiState === 'attack') {
+                // Face target
+                ai.facingRight = dx > 0;
+                
+                // Shoot
+                if (Math.random() < 0.1 && dist < 500) {
+                    const newBullets = ai.shoot(target, now);
+                    bullets.push(...newBullets);
+                }
+                
+                if (aiStateTime > 40) {
+                    aiState = Math.random() < 0.3 ? 'retreat' : 'approach';
+                    aiStateTime = 0;
+                }
+            } else if (aiState === 'retreat') {
+                if (dx > 0) keys['ArrowLeft'] = true;
+                else keys['ArrowRight'] = true;
+                
+                if (aiStateTime > 30) {
+                    aiState = 'approach';
+                    aiStateTime = 0;
+                }
+            }
+            
+            // Jump to reach platforms or dodge
+            if (Math.random() < 0.02 && ai.grounded) {
+                keys['ArrowUp'] = true;
+            }
+            
+            // Jump if target is above
+            if (dy < -100 && ai.grounded && Math.random() < 0.05) {
+                keys['ArrowUp'] = true;
+            }
+        }
+        
+        function clearAIKeys() {
+            if (gameMode === 'ai') {
+                delete keys['ArrowLeft'];
+                delete keys['ArrowRight'];
+                delete keys['ArrowUp'];
+            }
+        }
+        
+        // Input handling
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            
+            if (gameState === 'playing') {
+                const now = Date.now();
+                
+                // Player 1 shooting
+                if (e.code === 'KeyF') {
+                    const newBullets = player1.shoot(player2, now);
+                    bullets.push(...newBullets);
+                }
+                if (e.code === 'KeyG') {
+                    player1.block(player2, now);
+                }
+                
+                // Player 2 shooting (local only)
+                if (gameMode === 'local') {
+                    if (e.code === 'Period') {
+                        const newBullets = player2.shoot(player1, now);
+                        bullets.push(...newBullets);
+                    }
+                    if (e.code === 'Slash') {
+                        player2.block(player1, now);
+                    }
+                }
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+        
+        // Card selection
+        function showCardSelect(playerNum) {
+            cardSelectPlayer = playerNum;
+            const cardSelect = document.getElementById('cardSelect');
+            const title = document.getElementById('cardPlayerTitle');
+            const container = document.getElementById('cardsContainer');
+            
+            title.textContent = `PLAYER ${playerNum} - PICK A CARD`;
+            title.className = `card-title p${playerNum}`;
+            
+            // Get 3 random cards
+            const shuffled = [...CARDS].sort(() => Math.random() - 0.5);
+            const choices = shuffled.slice(0, 3);
+            
+            container.innerHTML = '';
+            choices.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card';
+                cardEl.innerHTML = `
+                    <div class="card-name">${card.name}</div>
+                    <div class="card-desc">${card.desc}</div>
+                    <div class="card-stats">
+                        ${card.stats.map(s => {
+                            const isPositive = s.startsWith('+') || !s.startsWith('-');
+                            return `<div class="stat ${isPositive ? 'positive' : 'negative'}">${s}</div>`;
+                        }).join('')}
+                    </div>
+                `;
+                cardEl.onclick = () => selectCard(card, playerNum);
+                container.appendChild(cardEl);
+            });
+            
+            cardSelect.classList.add('active');
+            gameState = 'cardSelect';
+        }
+        
+        function selectCard(card, playerNum) {
+            const player = playerNum === 1 ? player1 : player2;
+            card.effect(player);
+            player.cards.push(card.name);
+            player.ammo = player.maxAmmo;
+            
+            document.getElementById('cardSelect').classList.remove('active');
+            
+            // If player 1 just picked and it's local mode, let player 2 pick
+            if (playerNum === 1 && gameMode === 'local') {
+                setTimeout(() => showCardSelect(2), 300);
+            } else if (playerNum === 1 && gameMode === 'ai') {
+                // AI picks random card
+                const shuffled = [...CARDS].sort(() => Math.random() - 0.5);
+                const aiCard = shuffled[0];
+                aiCard.effect(player2);
+                player2.cards.push(aiCard.name);
+                player2.ammo = player2.maxAmmo;
+                startRound();
+            } else {
+                startRound();
+            }
+        }
+        
+        // Game flow
+        function startGame(mode) {
+            gameMode = mode;
+            document.getElementById('mainMenu').classList.add('hidden');
+            
+            initPlayers();
+            currentRound = 1;
+            player1.score = 0;
+            player2.score = 0;
+            
+            updateHUD();
+            startRound();
+        }
+        
+        function startRound() {
+            gameState = 'roundStart';
+            bullets = [];
+            explosions = [];
+            player1.reset();
+            player2.reset();
+            
+            document.getElementById('hud').classList.add('active');
+            
+            // Show round announcement
+            const announce = document.getElementById('roundAnnounce');
+            announce.textContent = `ROUND ${currentRound}`;
+            announce.classList.add('show');
+            
+            setTimeout(() => {
+                announce.textContent = 'FIGHT!';
+            }, 1000);
+            
+            setTimeout(() => {
+                announce.classList.remove('show');
+                gameState = 'playing';
+            }, 1500);
+        }
+        
+        function endRound(winner) {
+            gameState = 'roundEnd';
+            roundWinner = winner;
+            
+            if (winner === 1) player1.score++;
+            else player2.score++;
+            
+            updateHUD();
+            
+            // Check for game winner (first to 3)
+            if (player1.score >= 3 || player2.score >= 3) {
+                setTimeout(() => showWinner(player1.score >= 3 ? 1 : 2), 1000);
+            } else {
+                // Card selection for round winner
+                const announce = document.getElementById('roundAnnounce');
+                announce.textContent = `PLAYER ${winner} WINS`;
+                announce.classList.add('show');
+                
+                setTimeout(() => {
+                    announce.classList.remove('show');
+                    currentRound++;
+                    showCardSelect(winner);
+                }, 1500);
+            }
+        }
+        
+        function showWinner(winner) {
+            gameState = 'gameOver';
+            const screen = document.getElementById('winnerScreen');
+            const text = document.getElementById('winnerText');
+            
+            text.textContent = `PLAYER ${winner} WINS!`;
+            text.className = `winner-text p${winner}`;
+            
+            screen.classList.add('active');
+            document.getElementById('hud').classList.remove('active');
+        }
+        
+        function returnToMenu() {
+            document.getElementById('winnerScreen').classList.remove('active');
+            document.getElementById('mainMenu').classList.remove('hidden');
+            gameState = 'menu';
+        }
+        
+        function rematch() {
+            document.getElementById('winnerScreen').classList.remove('active');
+            player1.fullReset();
+            player2.fullReset();
+            currentRound = 1;
+            updateHUD();
+            startRound();
+        }
+        
+        function updateHUD() {
+            document.getElementById('health1').style.width = `${(player1.health / player1.maxHealth) * 100}%`;
+            document.getElementById('health2').style.width = `${(player2.health / player2.maxHealth) * 100}%`;
+            document.getElementById('ammo1').textContent = `${player1.ammo}/${player1.maxAmmo}`;
+            document.getElementById('ammo2').textContent = `${player2.ammo}/${player2.maxAmmo}`;
+            document.getElementById('score1').textContent = player1.score;
+            document.getElementById('score2').textContent = player2.score;
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            const now = Date.now();
+            
+            // Clear canvas
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw platforms
+            ctx.fillStyle = '#1a1a2e';
+            for (const plat of platforms) {
+                ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+                // Platform edge highlight
+                ctx.fillStyle = '#2a2a4e';
+                ctx.fillRect(plat.x, plat.y, plat.w, 3);
+                ctx.fillStyle = '#1a1a2e';
+            }
+            
+            if (gameState === 'playing') {
+                // Clear AI keys before update
+                clearAIKeys();
+                
+                // AI update
+                updateAI(now);
+                
+                // Update players
+                player1.update(keys, player2, now);
+                player2.update(keys, player1, now);
+                
+                // Update bullets
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    const bullet = bullets[i];
+                    const target = bullet.owner === player1 ? player2 : player1;
+                    bullet.update(target);
+                    
+                    if (!bullet.alive) {
+                        bullets.splice(i, 1);
+                        continue;
+                    }
+                    
+                    // Check collision with target
+                    const dx = bullet.x - target.x;
+                    const dy = bullet.y - target.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < bullet.radius + target.radius) {
+                        // Blocking check
+                        if (!target.blocking) {
+                            const damage = bullet.getDamage();
+                            target.takeDamage(damage, bullet);
+                            
+                            // Thruster knockback
+                            if (bullet.thruster) {
+                                target.vx += bullet.vx * 0.5;
+                                target.vy += bullet.vy * 0.3 - 5;
+                            }
+                            
+                            // Poison
+                            if (bullet.poison) {
+                                target.poisoned = true;
+                                target.poisonDamage = damage * 0.5;
+                                target.poisonEnd = now + 3000;
+                            }
+                            
+                            // Explosive
+                            if (bullet.explosive) {
+                                explosions.push(new Explosion(bullet.x, bullet.y, 80, damage * 0.5, bullet.owner));
+                            }
+                        }
+                        
+                        bullets.splice(i, 1);
+                    }
+                }
+                
+                // Update explosions
+                for (let i = explosions.length - 1; i >= 0; i--) {
+                    if (!explosions[i].update()) {
+                        explosions.splice(i, 1);
+                    }
+                }
+                
+                // Check for round end
+                if (player1.health <= 0) {
+                    endRound(2);
+                } else if (player2.health <= 0) {
+                    endRound(1);
+                }
+                
+                updateHUD();
+            }
+            
+            // Draw game objects
+            if (gameState !== 'menu') {
+                explosions.forEach(e => e.draw());
+                bullets.forEach(b => b.draw());
+                player1.draw();
+                player2.draw();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start the game loop
+        gameLoop();
+    </script>
+</body>
+</html>
