@@ -33,6 +33,7 @@
             display: block;
             border-radius: 8px;
             box-shadow: 0 0 60px rgba(255, 100, 50, 0.15);
+            cursor: crosshair;
         }
         
         /* Main Menu */
@@ -390,7 +391,7 @@
             <button class="menu-btn secondary" onclick="startGame('ai')">VS AI</button>
             <div class="menu-controls">
                 <strong>PLAYER 1 (Orange)</strong><br>
-                <span>WASD</span> - Move &nbsp;|&nbsp; <span>F</span> - Shoot &nbsp;|&nbsp; <span>G</span> - Block<br><br>
+                <span>WASD</span> - Move &nbsp;|&nbsp; <span>Left Click</span> - Shoot &nbsp;|&nbsp; <span>Right Click / G</span> - Block<br><br>
                 <strong>PLAYER 2 (Blue)</strong><br>
                 <span>Arrow Keys</span> - Move &nbsp;|&nbsp; <span>.</span> - Shoot &nbsp;|&nbsp; <span>/</span> - Block
             </div>
@@ -447,8 +448,8 @@
         
         // Physics constants
         const GRAVITY = 0.5;
-        const FRICTION = 0.85;
-        const AIR_FRICTION = 0.99;
+        const FRICTION = 0.92;
+        const AIR_FRICTION = 0.92;
         
         // Card definitions
         const CARDS = [
@@ -678,6 +679,14 @@
                 
                 // Score
                 this.score = 0;
+                
+                // Legs physics
+                this.legLength = 35; // Longer legs
+                this.leftLeg = { angle: 0, targetAngle: 0, angularVel: 0, footX: 0, footY: 0 };
+                this.rightLeg = { angle: 0, targetAngle: 0, angularVel: 0, footX: 0, footY: 0 };
+                this.legPhase = 0;
+                this.bodyShake = { x: 0, y: 0, targetX: 0, targetY: 0 };
+                this.lastVx = 0;
             }
             
             reset() {
@@ -748,7 +757,7 @@
                 }
                 
                 // Movement
-                let moveSpeed = 0.8;
+                let moveSpeed = 0.6;
                 let jumpForce = -14;
                 
                 // Chase bonus
@@ -776,7 +785,7 @@
                 
                 // Physics
                 this.vy += GRAVITY;
-                this.vx *= this.grounded ? FRICTION : AIR_FRICTION;
+                this.vx *= FRICTION;
                 
                 // Apply velocity
                 this.x += this.vx;
@@ -784,16 +793,18 @@
                 
                 // Platform collision
                 this.grounded = false;
+                const feetOffset = this.radius * 0.5 + this.legLength;
+                
                 for (const plat of platforms) {
                     if (this.collidesPlatform(plat)) {
-                        // Landing on top
-                        if (this.vy > 0 && this.y - this.vy <= plat.y + this.radius) {
-                            this.y = plat.y - this.radius;
+                        // Landing on top (feet touch platform)
+                        if (this.vy > 0 && this.y + feetOffset - this.vy <= plat.y + 5) {
+                            this.y = plat.y - feetOffset;
                             this.vy = 0;
                             this.grounded = true;
                         }
-                        // Hitting bottom
-                        else if (this.vy < 0 && this.y - this.vy >= plat.y + plat.h - this.radius) {
+                        // Hitting bottom with head
+                        else if (this.vy < 0 && this.y - this.radius - this.vy >= plat.y + plat.h - 5) {
                             this.y = plat.y + plat.h + this.radius;
                             this.vy = 0;
                         }
@@ -809,11 +820,12 @@
                 }
                 
                 // World bounds
+                const feetY = this.y + feetOffset;
                 if (this.x < this.radius) { this.x = this.radius; this.vx = 0; }
                 if (this.x > canvas.width - this.radius) { this.x = canvas.width - this.radius; this.vx = 0; }
                 if (this.y < this.radius) { this.y = this.radius; this.vy = 0; }
-                if (this.y > canvas.height - this.radius) {
-                    this.y = canvas.height - this.radius;
+                if (feetY > canvas.height) {
+                    this.y = canvas.height - feetOffset;
                     this.vy = 0;
                     this.grounded = true;
                 }
@@ -836,16 +848,76 @@
                 if (this.blocking && now - this.blockTime > 200) {
                     this.blocking = false;
                 }
+                
+                // Leg physics
+                const speed = Math.abs(this.vx);
+                const moving = speed > 0.5;
+                
+                if (moving && this.grounded) {
+                    // Walking animation - legs swing back and forth
+                    this.legPhase += speed * 0.15;
+                    this.leftLeg.targetAngle = Math.sin(this.legPhase) * 0.6;
+                    this.rightLeg.targetAngle = Math.sin(this.legPhase + Math.PI) * 0.6;
+                } else if (!this.grounded) {
+                    // In air - legs dangle/trail
+                    this.leftLeg.targetAngle = 0.3 + this.vy * 0.02;
+                    this.rightLeg.targetAngle = 0.2 + this.vy * 0.02;
+                } else {
+                    // Standing still
+                    this.leftLeg.targetAngle = 0.1;
+                    this.rightLeg.targetAngle = -0.1;
+                }
+                
+                // Leg spring physics
+                const legSpring = 0.3;
+                const legDamping = 0.7;
+                
+                this.leftLeg.angularVel += (this.leftLeg.targetAngle - this.leftLeg.angle) * legSpring;
+                this.leftLeg.angularVel *= legDamping;
+                this.leftLeg.angle += this.leftLeg.angularVel;
+                
+                this.rightLeg.angularVel += (this.rightLeg.targetAngle - this.rightLeg.angle) * legSpring;
+                this.rightLeg.angularVel *= legDamping;
+                this.rightLeg.angle += this.rightLeg.angularVel;
+                
+                // Body shake based on acceleration/deceleration
+                const accel = this.vx - this.lastVx;
+                this.lastVx = this.vx;
+                
+                // Shake more when changing direction or moving fast
+                this.bodyShake.targetX = -accel * 2 + (moving ? (Math.sin(this.legPhase * 2) * speed * 0.3) : 0);
+                this.bodyShake.targetY = moving && this.grounded ? Math.abs(Math.sin(this.legPhase)) * 2 : 0;
+                
+                // Add some wobble when landing
+                if (this.grounded && this.vy === 0 && Math.abs(this.bodyShake.y) < 0.1) {
+                    this.bodyShake.targetY += Math.random() * 0.5;
+                }
+                
+                // Spring physics for body shake
+                const shakeSpring = 0.4;
+                const shakeDamping = 0.75;
+                
+                const shakeDx = this.bodyShake.targetX - this.bodyShake.x;
+                const shakeDy = this.bodyShake.targetY - this.bodyShake.y;
+                this.bodyShake.x += shakeDx * shakeSpring;
+                this.bodyShake.y += shakeDy * shakeSpring;
+                this.bodyShake.x *= shakeDamping;
+                this.bodyShake.y *= shakeDamping;
             }
             
             collidesPlatform(plat) {
-                return this.x + this.radius > plat.x &&
-                       this.x - this.radius < plat.x + plat.w &&
-                       this.y + this.radius > plat.y &&
+                // Check collision using feet position (bottom of legs)
+                const feetY = this.y + this.radius * 0.5 + this.legLength;
+                const bodyLeft = this.x - this.radius;
+                const bodyRight = this.x + this.radius;
+                
+                return bodyRight > plat.x &&
+                       bodyLeft < plat.x + plat.w &&
+                       feetY > plat.y &&
                        this.y - this.radius < plat.y + plat.h;
             }
             
-            shoot(other, now) {
+            shoot(other, now, mouseTarget = null) {
                 if (this.ammo <= 0 || this.reloading) return [];
                 if (now - this.lastShot < this.fireRate * 1000) return [];
                 
@@ -853,7 +925,15 @@
                 this.ammo--;
                 
                 const bullets = [];
-                const baseAngle = this.facingRight ? 0 : Math.PI;
+                let baseAngle;
+                
+                // If mouse target provided (Player 1), aim at cursor
+                if (mouseTarget) {
+                    baseAngle = Math.atan2(mouseTarget.y - this.y, mouseTarget.x - this.x);
+                    this.facingRight = mouseTarget.x > this.x;
+                } else {
+                    baseAngle = this.facingRight ? 0 : Math.PI;
+                }
                 
                 for (let i = 0; i < this.bulletsPerShot; i++) {
                     let angle = baseAngle;
@@ -865,7 +945,7 @@
                     
                     bullets.push(new Bullet(
                         this.x + Math.cos(baseAngle) * (this.radius + 5),
-                        this.y,
+                        this.y + Math.sin(baseAngle) * (this.radius + 5),
                         Math.cos(angle) * this.bulletSpeed,
                         Math.sin(angle) * this.bulletSpeed,
                         this
@@ -934,13 +1014,17 @@
                 return true;
             }
             
-            draw() {
+            draw(mousePos = null) {
                 ctx.save();
+                
+                // Apply body shake offset
+                const drawX = this.x + this.bodyShake.x;
+                const drawY = this.y + this.bodyShake.y;
                 
                 // Shield effect when blocking
                 if (this.blocking) {
                     ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius + 15, 0, Math.PI * 2);
+                    ctx.arc(drawX, drawY, this.radius + 15, 0, Math.PI * 2);
                     ctx.strokeStyle = this.color;
                     ctx.lineWidth = 4;
                     ctx.globalAlpha = 0.6;
@@ -948,29 +1032,108 @@
                     ctx.globalAlpha = 1;
                 }
                 
-                // Body
+                // Draw legs first (behind body)
+                const legLength = this.legLength;
+                const legWidth = 3; // Thinner legs
+                const legAttachY = drawY + this.radius * 0.5;
+                const legSpacing = this.radius * 0.3;
+                
+                ctx.lineCap = 'round';
+                ctx.lineWidth = legWidth;
+                
+                // Left leg
+                ctx.save();
+                ctx.translate(drawX - legSpacing, legAttachY);
+                ctx.rotate(this.leftLeg.angle);
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, legLength);
+                ctx.strokeStyle = this.color;
+                ctx.stroke();
+                // Foot
+                ctx.beginPath();
+                ctx.ellipse(0, legLength, legWidth + 2, legWidth, 0, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+                
+                // Right leg
+                ctx.save();
+                ctx.translate(drawX + legSpacing, legAttachY);
+                ctx.rotate(this.rightLeg.angle);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, legLength);
+                ctx.strokeStyle = this.color;
+                ctx.stroke();
+                // Foot
+                ctx.beginPath();
+                ctx.ellipse(0, legLength, legWidth + 2, legWidth, 0, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+                
+                // Body - slightly squashed/stretched based on movement
+                const squash = 1 + this.bodyShake.y * 0.02;
+                const stretch = 1 - this.bodyShake.y * 0.01;
+                
+                ctx.save();
+                ctx.translate(drawX, drawY);
+                ctx.scale(stretch, squash);
+                
+                // Main body
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
                 ctx.fillStyle = this.color;
                 ctx.fill();
                 
-                // Face direction indicator
-                const eyeX = this.x + (this.facingRight ? 8 : -8);
+                // Body highlight/sheen
                 ctx.beginPath();
-                ctx.arc(eyeX, this.y - 5, 5, 0, Math.PI * 2);
+                ctx.arc(-this.radius * 0.3, -this.radius * 0.3, this.radius * 0.3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.fill();
+                
+                ctx.restore();
+                
+                // Calculate gun angle
+                let gunAngle;
+                if (mousePos && this.id === 1) {
+                    gunAngle = Math.atan2(mousePos.y - drawY, mousePos.x - drawX);
+                    this.facingRight = mousePos.x > this.x;
+                } else {
+                    gunAngle = this.facingRight ? 0 : Math.PI;
+                }
+                
+                // Face direction indicator (eye)
+                const eyeOffsetX = Math.cos(gunAngle) * 8;
+                const eyeOffsetY = Math.sin(gunAngle) * 4;
+                ctx.beginPath();
+                ctx.arc(drawX + eyeOffsetX, drawY - 5 + eyeOffsetY, 5, 0, Math.PI * 2);
                 ctx.fillStyle = '#fff';
                 ctx.fill();
                 
-                // Gun
+                // Pupil
+                ctx.beginPath();
+                ctx.arc(drawX + eyeOffsetX + Math.cos(gunAngle) * 2, drawY - 5 + eyeOffsetY + Math.sin(gunAngle) * 2, 2, 0, Math.PI * 2);
+                ctx.fillStyle = '#000';
+                ctx.fill();
+                
+                // Gun barrel (rotates toward mouse for player 1)
+                ctx.save();
+                ctx.translate(drawX, drawY);
+                ctx.rotate(gunAngle);
                 ctx.fillStyle = '#333';
-                const gunX = this.x + (this.facingRight ? this.radius : -this.radius - 15);
-                ctx.fillRect(gunX, this.y - 4, 20, 8);
+                ctx.fillRect(this.radius - 5, -4, 25, 8);
+                // Gun highlight
+                ctx.fillStyle = '#555';
+                ctx.fillRect(this.radius - 5, -4, 25, 2);
+                ctx.restore();
                 
                 // Health bar above head
                 const barWidth = 50;
                 const barHeight = 6;
                 const barX = this.x - barWidth / 2;
-                const barY = this.y - this.radius - 20;
+                const barY = drawY - this.radius - 15;
                 
                 ctx.fillStyle = '#333';
                 ctx.fillRect(barX, barY, barWidth, barHeight);
@@ -980,7 +1143,7 @@
                 // Poison effect
                 if (this.poisoned) {
                     ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius + 5, 0, Math.PI * 2);
+                    ctx.arc(drawX, drawY, this.radius + 5, 0, Math.PI * 2);
                     ctx.strokeStyle = '#00ff00';
                     ctx.lineWidth = 2;
                     ctx.globalAlpha = 0.5;
@@ -992,7 +1155,7 @@
                 if (this.reloading) {
                     const reloadProgress = (Date.now() - this.reloadStart) / (this.reloadTime * 1000);
                     ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius + 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * reloadProgress);
+                    ctx.arc(drawX, drawY, this.radius + 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * reloadProgress);
                     ctx.strokeStyle = '#ffff00';
                     ctx.lineWidth = 3;
                     ctx.stroke();
@@ -1067,13 +1230,16 @@
                 
                 if (this.x < this.radius || this.x > canvas.width - this.radius) {
                     if (!canDrill) {
+                        const hitX = this.x < this.radius ? this.radius : canvas.width - this.radius;
                         if (this.bouncesLeft > 0) {
+                            spawnRicochetEffect(hitX, this.y, this.vx, this.vy, this.owner.color);
                             this.vx *= -1;
                             this.bouncesLeft--;
                             this.bounceCount++;
                             if (this.x < this.radius) this.x = this.radius;
                             if (this.x > canvas.width - this.radius) this.x = canvas.width - this.radius;
                         } else {
+                            spawnImpactEffect(hitX, this.y, this.vx, this.vy, this.owner.color);
                             this.alive = false;
                         }
                     }
@@ -1081,13 +1247,16 @@
                 
                 if (this.y < this.radius || this.y > canvas.height - this.radius) {
                     if (!canDrill) {
+                        const hitY = this.y < this.radius ? this.radius : canvas.height - this.radius;
                         if (this.bouncesLeft > 0) {
+                            spawnRicochetEffect(this.x, hitY, this.vx, this.vy, this.owner.color);
                             this.vy *= -1;
                             this.bouncesLeft--;
                             this.bounceCount++;
                             if (this.y < this.radius) this.y = this.radius;
                             if (this.y > canvas.height - this.radius) this.y = canvas.height - this.radius;
                         } else {
+                            spawnImpactEffect(this.x, hitY, this.vx, this.vy, this.owner.color);
                             this.alive = false;
                         }
                     }
@@ -1101,14 +1270,23 @@
                             this.y + this.radius > plat.y &&
                             this.y - this.radius < plat.y + plat.h) {
                             
+                            // Determine which side was hit
+                            const overlapLeft = (this.x + this.radius) - plat.x;
+                            const overlapRight = (plat.x + plat.w) - (this.x - this.radius);
+                            const overlapTop = (this.y + this.radius) - plat.y;
+                            const overlapBottom = (plat.y + plat.h) - (this.y - this.radius);
+                            
+                            const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+                            
+                            // Calculate hit position for effect
+                            let hitX = this.x, hitY = this.y;
+                            if (minOverlap === overlapTop) hitY = plat.y;
+                            else if (minOverlap === overlapBottom) hitY = plat.y + plat.h;
+                            else if (minOverlap === overlapLeft) hitX = plat.x;
+                            else if (minOverlap === overlapRight) hitX = plat.x + plat.w;
+                            
                             if (this.bouncesLeft > 0) {
-                                // Determine which side was hit
-                                const overlapLeft = (this.x + this.radius) - plat.x;
-                                const overlapRight = (plat.x + plat.w) - (this.x - this.radius);
-                                const overlapTop = (this.y + this.radius) - plat.y;
-                                const overlapBottom = (plat.y + plat.h) - (this.y - this.radius);
-                                
-                                const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+                                spawnRicochetEffect(hitX, hitY, this.vx, this.vy, this.owner.color);
                                 
                                 if (minOverlap === overlapTop || minOverlap === overlapBottom) {
                                     this.vy *= -1;
@@ -1119,6 +1297,7 @@
                                 this.bouncesLeft--;
                                 this.bounceCount++;
                             } else {
+                                spawnImpactEffect(hitX, hitY, this.vx, this.vy, this.owner.color);
                                 this.alive = false;
                             }
                             break;
@@ -1197,18 +1376,163 @@
         let player1, player2;
         let bullets = [];
         let explosions = [];
+        let particles = [];
         let keys = {};
+        let mouse = { x: 0, y: 0 };
         let aiTarget = { x: 600, y: 300 };
         let aiState = 'approach';
         let aiStateTime = 0;
         
+        // Particle class for effects
+        class Particle {
+            constructor(x, y, vx, vy, color, size, life, type = 'spark') {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.color = color;
+                this.size = size;
+                this.maxLife = life;
+                this.life = life;
+                this.type = type;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.1; // slight gravity
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+                this.life--;
+                return this.life > 0;
+            }
+            
+            draw() {
+                const alpha = this.life / this.maxLife;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                
+                if (this.type === 'spark') {
+                    // Small spark
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * alpha, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                } else if (this.type === 'trail') {
+                    // Motion trail
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(this.x - this.vx * 3, this.y - this.vy * 3);
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = this.size * alpha;
+                    ctx.stroke();
+                } else if (this.type === 'ring') {
+                    // Expanding ring
+                    const expandProgress = 1 - alpha;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * (1 + expandProgress * 2), 0, Math.PI * 2);
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 3 * alpha;
+                    ctx.stroke();
+                } else if (this.type === 'flash') {
+                    // Bright flash
+                    const flashSize = this.size * (1 + (1 - alpha) * 0.5);
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, flashSize, 0, Math.PI * 2);
+                    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, flashSize);
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, ' + alpha + ')');
+                    gradient.addColorStop(0.3, this.color.replace(')', ', ' + alpha + ')').replace('rgb', 'rgba'));
+                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+        }
+        
+        // Spawn ricochet effect (smaller, subtle)
+        function spawnRicochetEffect(x, y, vx, vy, color) {
+            const speed = Math.sqrt(vx * vx + vy * vy);
+            const particleCount = Math.floor(3 + speed * 0.3);
+            
+            // Calculate reflection angle for directional sparks
+            const angle = Math.atan2(vy, vx);
+            
+            for (let i = 0; i < particleCount; i++) {
+                const spreadAngle = angle + Math.PI + (Math.random() - 0.5) * 1.5;
+                const particleSpeed = (1 + Math.random() * 2) * (speed * 0.15);
+                particles.push(new Particle(
+                    x, y,
+                    Math.cos(spreadAngle) * particleSpeed,
+                    Math.sin(spreadAngle) * particleSpeed,
+                    color,
+                    2 + Math.random() * 2,
+                    15 + Math.random() * 10,
+                    'spark'
+                ));
+            }
+            
+            // Small flash
+            particles.push(new Particle(x, y, 0, 0, color, 8 + speed * 0.5, 8, 'flash'));
+        }
+        
+        // Spawn impact effect (bigger, flashier based on velocity)
+        function spawnImpactEffect(x, y, vx, vy, color) {
+            const speed = Math.sqrt(vx * vx + vy * vy);
+            const intensity = Math.min(speed / 10, 3); // Cap intensity
+            const particleCount = Math.floor(8 + intensity * 8);
+            
+            // Sparks flying in all directions
+            for (let i = 0; i < particleCount; i++) {
+                const angle = (Math.PI * 2 * i / particleCount) + (Math.random() - 0.5) * 0.5;
+                const particleSpeed = (2 + Math.random() * 4) * intensity;
+                particles.push(new Particle(
+                    x, y,
+                    Math.cos(angle) * particleSpeed,
+                    Math.sin(angle) * particleSpeed,
+                    color,
+                    2 + Math.random() * 3 * intensity,
+                    20 + Math.random() * 15,
+                    'spark'
+                ));
+            }
+            
+            // Motion trails
+            const trailCount = Math.floor(4 + intensity * 4);
+            for (let i = 0; i < trailCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const particleSpeed = (3 + Math.random() * 5) * intensity;
+                particles.push(new Particle(
+                    x, y,
+                    Math.cos(angle) * particleSpeed,
+                    Math.sin(angle) * particleSpeed,
+                    '#ffffff',
+                    3 + intensity,
+                    12 + Math.random() * 8,
+                    'trail'
+                ));
+            }
+            
+            // Central flash (bigger with more speed)
+            particles.push(new Particle(x, y, 0, 0, color, 15 + intensity * 15, 15, 'flash'));
+            
+            // Expanding ring (more rings for higher velocity)
+            const ringCount = Math.floor(1 + intensity);
+            for (let i = 0; i < ringCount; i++) {
+                setTimeout(() => {
+                    particles.push(new Particle(x, y, 0, 0, color, 10 + intensity * 8, 20, 'ring'));
+                }, i * 50);
+            }
+        }
+        
         // Initialize players
         function initPlayers() {
-            player1 = new Player(200, 500, '#ff6b35', {
+            player1 = new Player(200, 460, '#ff6b35', {
                 left: 'KeyA', right: 'KeyD', up: 'KeyW', shoot: 'KeyF', block: 'KeyG'
             }, 1);
             
-            player2 = new Player(1000, 500, '#4361ee', {
+            player2 = new Player(1000, 460, '#4361ee', {
                 left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', shoot: 'Period', block: 'Slash'
             }, 2);
         }
@@ -1302,18 +1626,90 @@
             }
         }
         
+        // Cheat code detection (up up down down left right left right b a enter)
+        const cheatCode = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA', 'Enter'];
+        let cheatProgress = 0;
+        let iranModeUnlocked = false;
+        
+        // Iran Mode announcement
+        function showIranMode() {
+            iranModeUnlocked = true;
+            
+            // Apply ALL cards to player 1
+            CARDS.forEach(card => {
+                card.effect(player1);
+                player1.cards.push(card.name);
+            });
+            player1.ammo = player1.maxAmmo;
+            player1.health = player1.maxHealth;
+            
+            // Show announcement
+            const announce = document.getElementById('roundAnnounce');
+            announce.textContent = 'IRAN MODE UNLOCKED';
+            announce.style.color = '#00ff00';
+            announce.style.textShadow = '0 0 40px rgba(0, 255, 0, 0.8), 0 0 80px rgba(0, 255, 0, 0.5)';
+            announce.classList.add('show');
+            
+            // Screen flash effect
+            const flash = document.createElement('div');
+            flash.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 255, 0, 0.5);
+                pointer-events: none;
+                z-index: 1000;
+                animation: flashFade 1s ease-out forwards;
+            `;
+            document.getElementById('gameContainer').appendChild(flash);
+            
+            // Add flash animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes flashFade {
+                    0% { opacity: 1; }
+                    100% { opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            setTimeout(() => {
+                flash.remove();
+            }, 1000);
+            
+            setTimeout(() => {
+                announce.classList.remove('show');
+                announce.style.color = '';
+                announce.style.textShadow = '';
+            }, 2500);
+        }
+        
         // Input handling
         document.addEventListener('keydown', (e) => {
             keys[e.code] = true;
             
+            // Check cheat code
+            if (e.code === cheatCode[cheatProgress]) {
+                cheatProgress++;
+                if (cheatProgress === cheatCode.length && !iranModeUnlocked && gameState === 'playing') {
+                    showIranMode();
+                    cheatProgress = 0;
+                }
+            } else {
+                // Reset if wrong key (unless it's the start of the sequence)
+                if (e.code === cheatCode[0]) {
+                    cheatProgress = 1;
+                } else {
+                    cheatProgress = 0;
+                }
+            }
+            
             if (gameState === 'playing') {
                 const now = Date.now();
                 
-                // Player 1 shooting
-                if (e.code === 'KeyF') {
-                    const newBullets = player1.shoot(player2, now);
-                    bullets.push(...newBullets);
-                }
+                // Player 1 block (G key as backup, right-click is primary)
                 if (e.code === 'KeyG') {
                     player1.block(player2, now);
                 }
@@ -1333,6 +1729,31 @@
         
         document.addEventListener('keyup', (e) => {
             keys[e.code] = false;
+        });
+        
+        // Mouse tracking
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+        
+        // Mouse click to shoot (Player 1)
+        canvas.addEventListener('mousedown', (e) => {
+            if (gameState === 'playing' && e.button === 0) {
+                const now = Date.now();
+                const newBullets = player1.shoot(player2, now, mouse);
+                bullets.push(...newBullets);
+            }
+        });
+        
+        // Right click to block (Player 1)
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (gameState === 'playing') {
+                const now = Date.now();
+                player1.block(player2, now);
+            }
         });
         
         // Card selection
@@ -1404,6 +1825,8 @@
             currentRound = 1;
             player1.score = 0;
             player2.score = 0;
+            iranModeUnlocked = false;
+            cheatProgress = 0;
             
             updateHUD();
             startRound();
@@ -1413,6 +1836,7 @@
             gameState = 'roundStart';
             bullets = [];
             explosions = [];
+            particles = [];
             player1.reset();
             player2.reset();
             
@@ -1482,6 +1906,8 @@
             player1.fullReset();
             player2.fullReset();
             currentRound = 1;
+            iranModeUnlocked = false;
+            cheatProgress = 0;
             updateHUD();
             startRound();
         }
@@ -1535,7 +1961,7 @@
                         continue;
                     }
                     
-                    // Check collision with target
+                    // Check collision with target (body only, not legs)
                     const dx = bullet.x - target.x;
                     const dy = bullet.y - target.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1545,6 +1971,13 @@
                         if (!target.blocking) {
                             const damage = bullet.getDamage();
                             target.takeDamage(damage, bullet);
+                            
+                            // Hit effect on player
+                            spawnImpactEffect(
+                                target.x - (dx / dist) * target.radius,
+                                target.y - (dy / dist) * target.radius,
+                                bullet.vx, bullet.vy, bullet.owner.color
+                            );
                             
                             // Thruster knockback
                             if (bullet.thruster) {
@@ -1563,6 +1996,13 @@
                             if (bullet.explosive) {
                                 explosions.push(new Explosion(bullet.x, bullet.y, 80, damage * 0.5, bullet.owner));
                             }
+                        } else {
+                            // Blocked effect (smaller, deflected)
+                            spawnRicochetEffect(
+                                target.x - (dx / dist) * (target.radius + 15),
+                                target.y - (dy / dist) * (target.radius + 15),
+                                -bullet.vx, -bullet.vy, '#ffffff'
+                            );
                         }
                         
                         bullets.splice(i, 1);
@@ -1573,6 +2013,13 @@
                 for (let i = explosions.length - 1; i >= 0; i--) {
                     if (!explosions[i].update()) {
                         explosions.splice(i, 1);
+                    }
+                }
+                
+                // Update particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    if (!particles[i].update()) {
+                        particles.splice(i, 1);
                     }
                 }
                 
@@ -1588,10 +2035,45 @@
             
             // Draw game objects
             if (gameState !== 'menu') {
+                // Draw particles behind everything else
+                particles.forEach(p => p.draw());
                 explosions.forEach(e => e.draw());
                 bullets.forEach(b => b.draw());
-                player1.draw();
+                player1.draw(mouse);
                 player2.draw();
+                
+                // Draw crosshair for Player 1
+                if (gameState === 'playing') {
+                    ctx.save();
+                    ctx.strokeStyle = '#ff6b35';
+                    ctx.lineWidth = 2;
+                    ctx.globalAlpha = 0.8;
+                    
+                    // Outer circle
+                    ctx.beginPath();
+                    ctx.arc(mouse.x, mouse.y, 15, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Cross lines
+                    ctx.beginPath();
+                    ctx.moveTo(mouse.x - 20, mouse.y);
+                    ctx.lineTo(mouse.x - 8, mouse.y);
+                    ctx.moveTo(mouse.x + 8, mouse.y);
+                    ctx.lineTo(mouse.x + 20, mouse.y);
+                    ctx.moveTo(mouse.x, mouse.y - 20);
+                    ctx.lineTo(mouse.x, mouse.y - 8);
+                    ctx.moveTo(mouse.x, mouse.y + 8);
+                    ctx.lineTo(mouse.x, mouse.y + 20);
+                    ctx.stroke();
+                    
+                    // Center dot
+                    ctx.beginPath();
+                    ctx.arc(mouse.x, mouse.y, 2, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ff6b35';
+                    ctx.fill();
+                    
+                    ctx.restore();
+                }
             }
             
             requestAnimationFrame(gameLoop);
