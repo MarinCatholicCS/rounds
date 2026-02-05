@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Void Space</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: 'Rajdhani', sans-serif;
+            touch-action: none;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        /* UI Overlay */
+        .ui-overlay {
+            position: fixed;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .ui-overlay * {
+            pointer-events: auto;
+        }
+        
+        /* Header */
+        .header {
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            text-shadow: 0 0 30px rgba(255,255,255,0.5);
+        }
+        
+        .logo span {
+            opacity: 0.4;
+            font-weight: 400;
+        }
+        
+        .player-count {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 0.1em;
+            backdrop-filter: blur(10px);
+        }
+        
+        .player-count strong {
+            color: #fff;
+            font-weight: 500;
+        }
+        
+        /* Controls hint */
+        .controls-hint {
+            bottom: 30px;
+            left: 30px;
+            color: rgba(255,255,255,0.3);
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+        
+        .controls-hint kbd {
+            display: inline-block;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin: 0 3px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.7rem;
+        }
+        
+        /* Mobile joystick */
+        .joystick-zone {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 50%;
+            height: 40%;
+            z-index: 50;
+        }
+        
+        .joystick-container {
+            position: absolute;
+            bottom: 80px;
+            left: 60px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .joystick-knob {
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+            border-radius: 50%;
+            transition: transform 0.05s ease-out;
+        }
+        
+        /* Look zone for camera */
+        .look-zone {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 50%;
+            height: 40%;
+            z-index: 50;
+        }
+        
+        /* Your color indicator */
+        .your-color {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+        
+        .color-orb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            box-shadow: 0 0 20px currentColor, inset 0 0 10px rgba(255,255,255,0.3);
+        }
+        
+        /* Loading screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+        
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .loading-text {
+            font-family: 'Orbitron', monospace;
+            font-size: 1rem;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 0.5em;
+            margin-top: 30px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        .loading-ring {
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
+            
+            .logo {
+                font-size: 1rem;
+            }
+            
+            .player-count {
+                font-size: 0.75rem;
+                padding: 8px 15px;
+            }
+            
+            .controls-hint {
+                display: none;
+            }
+            
+            .joystick-container {
+                display: flex;
+            }
+            
+            .your-color {
+                bottom: auto;
+                top: 70px;
+                right: 20px;
+            }
+        }
+        
+        /* Name tags */
+        .nametag {
+            position: absolute;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 12px;
+            text-align: center;
+            pointer-events: none;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            white-space: nowrap;
+            transform: translate(-50%, -100%);
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loading">
+        <div class="loading-ring"></div>
+        <div class="loading-text">ENTERING VOID</div>
+    </div>
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+    
+    <!-- UI Overlays -->
+    <div class="ui-overlay header">
+        <div class="logo">VOID<span>SPACE</span></div>
+        <div class="player-count">
+            <strong id="playerCount">0</strong> IN VOID
+        </div>
+    </div>
+    
+    <div class="ui-overlay controls-hint">
+        <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> MOVE · <kbd>MOUSE</kbd> LOOK
+    </div>
+    
+    <div class="your-color">
+        YOUR ESSENCE <div class="color-orb" id="yourColor"></div>
+    </div>
+    
+    <!-- Mobile Controls -->
+    <div class="joystick-zone" id="joystickZone">
+        <div class="joystick-container" id="joystickContainer">
+            <div class="joystick-knob" id="joystickKnob"></div>
+        </div>
+    </div>
+    <div class="look-zone" id="lookZone"></div>
+    
+    <!-- Nametags container -->
+    <div id="nametags"></div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDI9HGn4Dzd00Q_zLQZMRapI3Z8wX7ltHw",
+            authDomain: "interact-mc.firebaseapp.com",
+            databaseURL: "https://interact-mc-default-rtdb.firebaseio.com",
+            projectId: "interact-mc",
+            storageBucket: "interact-mc.firebasestorage.app",
+            messagingSenderId: "336656676684",
+            appId: "1:336656676684:web:8b348d7a2a9529b42ac1e9",
+            measurementId: "G-4W59B6XST2"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // ============== GAME STATE ==============
+        const state = {
+            playerId: 'player_' + Math.random().toString(36).substr(2, 9),
+            playerColor: generateVibrantColor(),
+            position: { x: 0, y: 2, z: 0 },
+            rotation: { x: 0, y: 0 },
+            velocity: { x: 0, y: 0, z: 0 },
+            players: {},
+            keys: { w: false, a: false, s: false, d: false, shift: false },
+            isMobile: /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+            joystick: { active: false, x: 0, y: 0 },
+            lookDelta: { x: 0, y: 0 },
+            mouseSensitivity: 0.002,
+            touchSensitivity: 0.005,
+            moveSpeed: 0.15,
+            friction: 0.85
+        };
+
+        // Generate vibrant, distinct colors
+        function generateVibrantColor() {
+            const hue = Math.random() * 360;
+            const saturation = 70 + Math.random() * 30;
+            const lightness = 50 + Math.random() * 20;
+            return hslToHex(hue, saturation, lightness);
+        }
+
+        function hslToHex(h, s, l) {
+            s /= 100;
+            l /= 100;
+            const a = s * Math.min(l, 1 - l);
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`;
+        }
+
+        // ============== THREE.JS SETUP ==============
+        let scene, camera, renderer, playerMeshes = {};
+
+        function initThree() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000011, 0.015);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(state.position.x, state.position.y, state.position.z);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setClearColor(0x000011);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x222244, 0.5);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+            pointLight.position.set(0, 20, 0);
+            scene.add(pointLight);
+
+            // Ground grid
+            createEnvironment();
+
+            // Handle resize
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createEnvironment() {
+            // Infinite grid effect
+            const gridHelper = new THREE.GridHelper(200, 100, 0x1a1a3a, 0x0a0a1a);
+            gridHelper.position.y = 0;
+            scene.add(gridHelper);
+
+            // Scattered ambient particles
+            const particleCount = 500;
+            const particleGeometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 200;
+                positions[i * 3 + 1] = Math.random() * 50;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
+            }
+            
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const particleMaterial = new THREE.PointsMaterial({
+                color: 0x4444aa,
+                size: 0.1,
+                transparent: true,
+                opacity: 0.6,
+                sizeAttenuation: true
+            });
+            
+            const particles = new THREE.Points(particleGeometry, particleMaterial);
+            scene.add(particles);
+
+            // Distant glowing pillars for orientation
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const distance = 80;
+                const pillarGeometry = new THREE.CylinderGeometry(0.5, 0.5, 30, 8);
+                const pillarMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x2233aa,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const pillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
+                pillar.position.set(
+                    Math.cos(angle) * distance,
+                    15,
+                    Math.sin(angle) * distance
+                );
+                scene.add(pillar);
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ============== PLAYER RENDERING ==============
+        function createPlayerMesh(color) {
+            const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+            const material = new THREE.MeshStandardMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.5,
+                metalness: 0.3,
+                roughness: 0.4
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+
+            // Add glow effect
+            const glowGeometry = new THREE.SphereGeometry(0.7, 32, 32);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.2
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            mesh.add(glow);
+
+            // Point light for each player
+            const light = new THREE.PointLight(color, 0.5, 10);
+            mesh.add(light);
+
+            return mesh;
+        }
+
+        function updatePlayerMesh(playerId, data) {
+            if (playerId === state.playerId) return;
+
+            if (!playerMeshes[playerId]) {
+                playerMeshes[playerId] = createPlayerMesh(data.color);
+                scene.add(playerMeshes[playerId]);
+            }
+
+            // Smooth interpolation
+            const mesh = playerMeshes[playerId];
+            mesh.position.lerp(new THREE.Vector3(data.x, data.y, data.z), 0.2);
+            
+            // Floating animation
+            mesh.position.y = data.y + Math.sin(Date.now() * 0.003 + playerId.charCodeAt(0)) * 0.1;
+        }
+
+        function removePlayerMesh(playerId) {
+            if (playerMeshes[playerId]) {
+                scene.remove(playerMeshes[playerId]);
+                delete playerMeshes[playerId];
+            }
+        }
+
+        // ============== FIREBASE SYNC ==============
+        function initFirebase() {
+            const playerRef = database.ref('players/' + state.playerId);
+            const playersRef = database.ref('players');
+
+            // Set initial position
+            playerRef.set({
+                x: state.position.x,
+                y: state.position.y,
+                z: state.position.z,
+                color: state.playerColor,
+                lastUpdate: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // Remove on disconnect
+            playerRef.onDisconnect().remove();
+
+            // Listen for all players
+            playersRef.on('value', (snapshot) => {
+                const players = snapshot.val() || {};
+                state.players = players;
+                
+                // Update player count
+                document.getElementById('playerCount').textContent = Object.keys(players).length;
+
+                // Remove disconnected players
+                for (const id in playerMeshes) {
+                    if (!players[id]) {
+                        removePlayerMesh(id);
+                    }
+                }
+
+                // Update/add players
+                for (const id in players) {
+                    updatePlayerMesh(id, players[id]);
+                }
+            });
+        }
+
+        function syncPosition() {
+            database.ref('players/' + state.playerId).update({
+                x: state.position.x,
+                y: state.position.y,
+                z: state.position.z,
+                lastUpdate: firebase.database.ServerValue.TIMESTAMP
+            });
+        }
+
+        // ============== CONTROLS ==============
+        function initControls() {
+            // Keyboard
+            document.addEventListener('keydown', (e) => {
+                const key = e.key.toLowerCase();
+                if (state.keys.hasOwnProperty(key)) {
+                    state.keys[key] = true;
+                }
+                if (e.key === 'Shift') state.keys.shift = true;
+            });
+
+            document.addEventListener('keyup', (e) => {
+                const key = e.key.toLowerCase();
+                if (state.keys.hasOwnProperty(key)) {
+                    state.keys[key] = false;
+                }
+                if (e.key === 'Shift') state.keys.shift = false;
+            });
+
+            // Mouse look (desktop)
+            if (!state.isMobile) {
+                document.addEventListener('click', () => {
+                    renderer.domElement.requestPointerLock();
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (document.pointerLockElement === renderer.domElement) {
+                        state.rotation.y -= e.movementX * state.mouseSensitivity;
+                        state.rotation.x -= e.movementY * state.mouseSensitivity;
+                        state.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, state.rotation.x));
+                    }
+                });
+            }
+
+            // Mobile controls
+            if (state.isMobile) {
+                initMobileControls();
+            }
+        }
+
+        function initMobileControls() {
+            const joystickZone = document.getElementById('joystickZone');
+            const joystickContainer = document.getElementById('joystickContainer');
+            const joystickKnob = document.getElementById('joystickKnob');
+            const lookZone = document.getElementById('lookZone');
+
+            let joystickOrigin = { x: 0, y: 0 };
+            let lookOrigin = { x: 0, y: 0 };
+            let lookTouchId = null;
+
+            // Joystick touch
+            joystickZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                state.joystick.active = true;
+                joystickOrigin = { x: touch.clientX, y: touch.clientY };
+                
+                joystickContainer.style.left = (touch.clientX - 60) + 'px';
+                joystickContainer.style.bottom = (window.innerHeight - touch.clientY - 60) + 'px';
+                joystickContainer.style.display = 'flex';
+            });
+
+            joystickZone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!state.joystick.active) return;
+                
+                const touch = e.touches[0];
+                const dx = touch.clientX - joystickOrigin.x;
+                const dy = touch.clientY - joystickOrigin.y;
+                const distance = Math.min(Math.sqrt(dx * dx + dy * dy), 50);
+                const angle = Math.atan2(dy, dx);
+                
+                const knobX = Math.cos(angle) * distance;
+                const knobY = Math.sin(angle) * distance;
+                
+                joystickKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+                
+                state.joystick.x = knobX / 50;
+                state.joystick.y = knobY / 50;
+            });
+
+            joystickZone.addEventListener('touchend', (e) => {
+                state.joystick.active = false;
+                state.joystick.x = 0;
+                state.joystick.y = 0;
+                joystickKnob.style.transform = 'translate(0, 0)';
+                joystickContainer.style.display = 'none';
+            });
+
+            // Look touch
+            lookZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                lookTouchId = touch.identifier;
+                lookOrigin = { x: touch.clientX, y: touch.clientY };
+            });
+
+            lookZone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                for (let touch of e.changedTouches) {
+                    if (touch.identifier === lookTouchId) {
+                        const dx = touch.clientX - lookOrigin.x;
+                        const dy = touch.clientY - lookOrigin.y;
+                        
+                        state.rotation.y -= dx * state.touchSensitivity;
+                        state.rotation.x -= dy * state.touchSensitivity;
+                        state.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, state.rotation.x));
+                        
+                        lookOrigin = { x: touch.clientX, y: touch.clientY };
+                    }
+                }
+            });
+
+            lookZone.addEventListener('touchend', (e) => {
+                for (let touch of e.changedTouches) {
+                    if (touch.identifier === lookTouchId) {
+                        lookTouchId = null;
+                    }
+                }
+            });
+        }
+
+        // ============== GAME LOOP ==============
+        function updateMovement() {
+            const speed = state.keys.shift ? state.moveSpeed * 1.5 : state.moveSpeed;
+            
+            // Get movement direction from keys or joystick
+            let moveX = 0;
+            let moveZ = 0;
+
+            if (state.isMobile && state.joystick.active) {
+                moveX = state.joystick.x;
+                moveZ = state.joystick.y;
+            } else {
+                if (state.keys.w) moveZ -= 1;
+                if (state.keys.s) moveZ += 1;
+                if (state.keys.a) moveX -= 1;
+                if (state.keys.d) moveX += 1;
+            }
+
+            // Normalize diagonal movement
+            const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
+            if (length > 0) {
+                moveX /= length;
+                moveZ /= length;
+            }
+
+            // Apply rotation to movement
+            const sin = Math.sin(state.rotation.y);
+            const cos = Math.cos(state.rotation.y);
+            
+            state.velocity.x += (moveX * cos - moveZ * sin) * speed;
+            state.velocity.z += (moveX * sin + moveZ * cos) * speed;
+
+            // Apply friction
+            state.velocity.x *= state.friction;
+            state.velocity.z *= state.friction;
+
+            // Update position
+            state.position.x += state.velocity.x;
+            state.position.z += state.velocity.z;
+
+            // Update camera
+            camera.position.set(state.position.x, state.position.y, state.position.z);
+            camera.rotation.order = 'YXZ';
+            camera.rotation.y = state.rotation.y;
+            camera.rotation.x = state.rotation.x;
+        }
+
+        let lastSync = 0;
+        function gameLoop() {
+            requestAnimationFrame(gameLoop);
+            
+            updateMovement();
+            
+            // Sync position every 50ms
+            if (Date.now() - lastSync > 50) {
+                syncPosition();
+                lastSync = Date.now();
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // ============== INIT ==============
+        function init() {
+            // Set your color indicator
+            document.getElementById('yourColor').style.backgroundColor = state.playerColor;
+            document.getElementById('yourColor').style.color = state.playerColor;
+
+            initThree();
+            initControls();
+            initFirebase();
+            
+            // Hide loading screen
+            setTimeout(() => {
+                document.getElementById('loading').classList.add('hidden');
+            }, 1500);
+            
+            gameLoop();
+        }
+
+        // Start when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
