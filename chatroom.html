@@ -365,7 +365,7 @@
         function initThree() {
             // Scene
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x000011, 0.015);
+            scene.fog = new THREE.FogExp2(0x0a0a1a, 0.008);
 
             // Camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -375,16 +375,30 @@
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.setClearColor(0x000011);
+            renderer.setClearColor(0x0a0a1a);
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // Lighting
-            const ambientLight = new THREE.AmbientLight(0x222244, 0.5);
+            // Lighting - bright and visible
+            const ambientLight = new THREE.AmbientLight(0x6666aa, 1.2);
             scene.add(ambientLight);
 
-            const pointLight = new THREE.PointLight(0xffffff, 1, 100);
-            pointLight.position.set(0, 20, 0);
+            const pointLight = new THREE.PointLight(0xffffff, 1.2, 200);
+            pointLight.position.set(0, 40, 0);
             scene.add(pointLight);
+            
+            // Hemisphere light for even illumination
+            const hemiLight = new THREE.HemisphereLight(0x8888cc, 0x444466, 1.0);
+            scene.add(hemiLight);
+            
+            // Violet accent light
+            const violetLight = new THREE.PointLight(0xaa77ff, 0.8, 250);
+            violetLight.position.set(-50, 60, -50);
+            scene.add(violetLight);
+            
+            // Warm tan light from the other side
+            const tanLight = new THREE.PointLight(0xffcc88, 0.6, 250);
+            tanLight.position.set(60, 50, 60);
+            scene.add(tanLight);
 
             // Ground grid
             createEnvironment();
@@ -394,8 +408,8 @@
         }
 
         function createEnvironment() {
-            // Infinite grid effect
-            const gridHelper = new THREE.GridHelper(200, 100, 0x2a1a4a, 0x0a0a1a);
+            // Infinite grid effect - brighter
+            const gridHelper = new THREE.GridHelper(200, 100, 0x4a3a6a, 0x1a1a2a);
             gridHelper.position.y = 0;
             scene.add(gridHelper);
 
@@ -435,20 +449,7 @@
             const particles = new THREE.Points(particleGeometry, particleMaterial);
             scene.add(particles);
 
-            // Violet Nebulae - large glowing clouds
-            createNebula(40, 25, -60, 0x8844aa, 35);
-            createNebula(-50, 30, 40, 0x6633aa, 40);
-            createNebula(70, 20, 50, 0x9955cc, 30);
-            createNebula(-30, 35, -80, 0x7744bb, 45);
-            createNebula(0, 40, 90, 0x5522aa, 50);
-            
-            // Tan cosmic radiation clouds
-            createNebula(60, 15, -30, 0xccaa77, 25);
-            createNebula(-70, 22, -50, 0xddbb88, 30);
-            createNebula(20, 28, 70, 0xc9a066, 28);
-            createNebula(-40, 18, 60, 0xb89955, 22);
-
-            // Cosmic radiation streams (tan/gold particle streams)
+            // Tan cosmic radiation clouds (as particle clusters, not nebulae)
             createCosmicRadiation();
 
             // Distant glowing pillars for orientation
@@ -457,9 +458,9 @@
                 const distance = 80;
                 const pillarGeometry = new THREE.CylinderGeometry(0.5, 0.5, 30, 8);
                 const pillarMaterial = new THREE.MeshBasicMaterial({
-                    color: i % 2 === 0 ? 0x4433aa : 0x886644,
+                    color: i % 2 === 0 ? 0x6655cc : 0xccaa77,
                     transparent: true,
-                    opacity: 0.4
+                    opacity: 0.6
                 });
                 const pillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
                 pillar.position.set(
@@ -471,92 +472,42 @@
             }
         }
 
-        // Create nebula cloud
-        function createNebula(x, y, z, color, size) {
-            const nebulaGroup = new THREE.Group();
-            
-            // Multiple layered spheres for volumetric effect
-            for (let i = 0; i < 5; i++) {
-                const geometry = new THREE.SphereGeometry(size * (0.5 + Math.random() * 0.5), 16, 16);
-                const material = new THREE.MeshBasicMaterial({
-                    color: color,
-                    transparent: true,
-                    opacity: 0.03 + Math.random() * 0.04,
-                    side: THREE.BackSide
-                });
-                const nebulaPart = new THREE.Mesh(geometry, material);
-                nebulaPart.position.set(
-                    (Math.random() - 0.5) * size * 0.5,
-                    (Math.random() - 0.5) * size * 0.3,
-                    (Math.random() - 0.5) * size * 0.5
-                );
-                nebulaGroup.add(nebulaPart);
-            }
-            
-            // Inner glow core
-            const coreGeometry = new THREE.SphereGeometry(size * 0.3, 16, 16);
-            const coreMaterial = new THREE.MeshBasicMaterial({
-                color: color,
-                transparent: true,
-                opacity: 0.1
-            });
-            const core = new THREE.Mesh(coreGeometry, coreMaterial);
-            nebulaGroup.add(core);
-            
-            // Point light for glow effect
-            const light = new THREE.PointLight(color, 0.5, size * 2);
-            nebulaGroup.add(light);
-            
-            nebulaGroup.position.set(x, y, z);
-            nebulaGroup.userData = { 
-                originalY: y, 
-                phase: Math.random() * Math.PI * 2,
-                pulseSpeed: 0.0005 + Math.random() * 0.001
-            };
-            scene.add(nebulaGroup);
-            nebulae.push(nebulaGroup);
-        }
-
         // Create cosmic radiation streams
         function createCosmicRadiation() {
-            const streamCount = 6;
+            const streamCount = 8;
             
             for (let s = 0; s < streamCount; s++) {
-                const particleCount = 200;
+                const particleCount = 300;
                 const geometry = new THREE.BufferGeometry();
                 const positions = new Float32Array(particleCount * 3);
-                const sizes = new Float32Array(particleCount);
                 
                 const startAngle = (s / streamCount) * Math.PI * 2;
-                const radius = 50 + Math.random() * 40;
-                const height = 10 + Math.random() * 30;
+                const radius = 40 + Math.random() * 50;
+                const height = 5 + Math.random() * 25;
                 
                 for (let i = 0; i < particleCount; i++) {
                     const t = i / particleCount;
-                    const angle = startAngle + t * Math.PI * 0.5;
-                    const r = radius + Math.sin(t * Math.PI * 4) * 10;
+                    const angle = startAngle + t * Math.PI * 0.6;
+                    const r = radius + Math.sin(t * Math.PI * 5) * 15;
                     
-                    positions[i * 3] = Math.cos(angle) * r + (Math.random() - 0.5) * 8;
-                    positions[i * 3 + 1] = height + t * 20 + (Math.random() - 0.5) * 5;
-                    positions[i * 3 + 2] = Math.sin(angle) * r + (Math.random() - 0.5) * 8;
-                    
-                    sizes[i] = 0.2 + Math.random() * 0.3;
+                    positions[i * 3] = Math.cos(angle) * r + (Math.random() - 0.5) * 10;
+                    positions[i * 3 + 1] = height + t * 25 + (Math.random() - 0.5) * 6;
+                    positions[i * 3 + 2] = Math.sin(angle) * r + (Math.random() - 0.5) * 10;
                 }
                 
                 geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
                 
                 const material = new THREE.PointsMaterial({
-                    color: s % 2 === 0 ? 0xddaa66 : 0xccbb88,
-                    size: 0.3,
+                    color: s % 2 === 0 ? 0xffcc77 : 0xeebb88,
+                    size: 0.4,
                     transparent: true,
-                    opacity: 0.4,
+                    opacity: 0.7,
                     sizeAttenuation: true
                 });
                 
                 const stream = new THREE.Points(geometry, material);
                 stream.userData = { 
-                    rotationSpeed: 0.0001 + Math.random() * 0.0002,
+                    rotationSpeed: 0.00015 + Math.random() * 0.00025,
                     direction: s % 2 === 0 ? 1 : -1
                 };
                 scene.add(stream);
@@ -565,7 +516,6 @@
         }
 
         // Animation arrays
-        let nebulae = [];
         let radiationStreams = [];
 
         function onWindowResize() {
@@ -576,31 +526,131 @@
 
         // ============== PLAYER RENDERING ==============
         function createPlayerMesh(color) {
-            const geometry = new THREE.SphereGeometry(0.5, 32, 32);
-            const material = new THREE.MeshStandardMaterial({
+            const playerGroup = new THREE.Group();
+            
+            // Material for glowing neon effect
+            const neonMaterial = new THREE.MeshStandardMaterial({
                 color: color,
                 emissive: color,
-                emissiveIntensity: 0.5,
+                emissiveIntensity: 0.8,
                 metalness: 0.3,
                 roughness: 0.4
             });
-            const mesh = new THREE.Mesh(geometry, material);
-
-            // Add glow effect
-            const glowGeometry = new THREE.SphereGeometry(0.7, 32, 32);
+            
             const glowMaterial = new THREE.MeshBasicMaterial({
                 color: color,
                 transparent: true,
-                opacity: 0.2
+                opacity: 0.3
             });
-            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-            mesh.add(glow);
 
-            // Point light for each player
-            const light = new THREE.PointLight(color, 0.5, 10);
-            mesh.add(light);
+            // Head (sphere)
+            const headGeometry = new THREE.SphereGeometry(0.25, 16, 16);
+            const head = new THREE.Mesh(headGeometry, neonMaterial);
+            head.position.y = 1.6;
+            playerGroup.add(head);
+            
+            // Head glow
+            const headGlow = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), glowMaterial);
+            headGlow.position.y = 1.6;
+            playerGroup.add(headGlow);
 
-            return mesh;
+            // Torso (capsule-like: cylinder + spheres)
+            const torsoGeometry = new THREE.CylinderGeometry(0.2, 0.15, 0.6, 8);
+            const torso = new THREE.Mesh(torsoGeometry, neonMaterial);
+            torso.position.y = 1.1;
+            playerGroup.add(torso);
+            
+            // Torso glow
+            const torsoGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.21, 0.65, 8), glowMaterial);
+            torsoGlow.position.y = 1.1;
+            playerGroup.add(torsoGlow);
+
+            // Arms
+            const armGeometry = new THREE.CylinderGeometry(0.06, 0.05, 0.5, 8);
+            
+            // Left arm
+            const leftArm = new THREE.Mesh(armGeometry, neonMaterial);
+            leftArm.position.set(-0.3, 1.1, 0);
+            leftArm.rotation.z = 0.2;
+            playerGroup.add(leftArm);
+            
+            const leftArmGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.52, 8), glowMaterial);
+            leftArmGlow.position.set(-0.3, 1.1, 0);
+            leftArmGlow.rotation.z = 0.2;
+            playerGroup.add(leftArmGlow);
+            
+            // Right arm
+            const rightArm = new THREE.Mesh(armGeometry, neonMaterial);
+            rightArm.position.set(0.3, 1.1, 0);
+            rightArm.rotation.z = -0.2;
+            playerGroup.add(rightArm);
+            
+            const rightArmGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.52, 8), glowMaterial);
+            rightArmGlow.position.set(0.3, 1.1, 0);
+            rightArmGlow.rotation.z = -0.2;
+            playerGroup.add(rightArmGlow);
+
+            // Legs
+            const legGeometry = new THREE.CylinderGeometry(0.07, 0.05, 0.6, 8);
+            
+            // Left leg
+            const leftLeg = new THREE.Mesh(legGeometry, neonMaterial);
+            leftLeg.position.set(-0.1, 0.5, 0);
+            playerGroup.add(leftLeg);
+            
+            const leftLegGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.62, 8), glowMaterial);
+            leftLegGlow.position.set(-0.1, 0.5, 0);
+            playerGroup.add(leftLegGlow);
+            
+            // Right leg
+            const rightLeg = new THREE.Mesh(legGeometry, neonMaterial);
+            rightLeg.position.set(0.1, 0.5, 0);
+            playerGroup.add(rightLeg);
+            
+            const rightLegGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.62, 8), glowMaterial);
+            rightLegGlow.position.set(0.1, 0.5, 0);
+            playerGroup.add(rightLegGlow);
+
+            // Hands (small spheres)
+            const handGeometry = new THREE.SphereGeometry(0.06, 8, 8);
+            
+            const leftHand = new THREE.Mesh(handGeometry, neonMaterial);
+            leftHand.position.set(-0.35, 0.82, 0);
+            playerGroup.add(leftHand);
+            
+            const rightHand = new THREE.Mesh(handGeometry, neonMaterial);
+            rightHand.position.set(0.35, 0.82, 0);
+            playerGroup.add(rightHand);
+
+            // Feet (small spheres)
+            const footGeometry = new THREE.SphereGeometry(0.07, 8, 8);
+            
+            const leftFoot = new THREE.Mesh(footGeometry, neonMaterial);
+            leftFoot.position.set(-0.1, 0.18, 0.03);
+            playerGroup.add(leftFoot);
+            
+            const rightFoot = new THREE.Mesh(footGeometry, neonMaterial);
+            rightFoot.position.set(0.1, 0.18, 0.03);
+            playerGroup.add(rightFoot);
+
+            // Point light for neon glow effect
+            const light = new THREE.PointLight(color, 0.8, 8);
+            light.position.y = 1.1;
+            playerGroup.add(light);
+
+            // Store references for animation
+            playerGroup.userData.leftArm = leftArm;
+            playerGroup.userData.rightArm = rightArm;
+            playerGroup.userData.leftLeg = leftLeg;
+            playerGroup.userData.rightLeg = rightLeg;
+            playerGroup.userData.leftArmGlow = leftArmGlow;
+            playerGroup.userData.rightArmGlow = rightArmGlow;
+            playerGroup.userData.leftLegGlow = leftLegGlow;
+            playerGroup.userData.rightLegGlow = rightLegGlow;
+            playerGroup.userData.lastPos = { x: 0, z: 0 };
+            playerGroup.userData.animPhase = Math.random() * Math.PI * 2;
+
+            return playerGroup;
         }
 
         function updatePlayerMesh(playerId, data) {
@@ -611,12 +661,51 @@
                 scene.add(playerMeshes[playerId]);
             }
 
-            // Smooth interpolation
             const mesh = playerMeshes[playerId];
-            mesh.position.lerp(new THREE.Vector3(data.x, data.y, data.z), 0.2);
+            const targetPos = new THREE.Vector3(data.x, data.y - 1.8, data.z);
             
-            // Floating animation
-            mesh.position.y = data.y + Math.sin(Date.now() * 0.003 + playerId.charCodeAt(0)) * 0.1;
+            // Calculate movement for animation
+            const lastPos = mesh.userData.lastPos;
+            const dx = data.x - lastPos.x;
+            const dz = data.z - lastPos.z;
+            const isMoving = Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01;
+            
+            // Smooth position interpolation
+            mesh.position.lerp(targetPos, 0.15);
+            
+            // Rotate to face movement direction
+            if (isMoving) {
+                const targetRotation = Math.atan2(dx, dz);
+                mesh.rotation.y = targetRotation;
+                
+                // Walking animation
+                mesh.userData.animPhase += 0.2;
+                const swing = Math.sin(mesh.userData.animPhase) * 0.4;
+                
+                // Animate arms
+                mesh.userData.leftArm.rotation.x = swing;
+                mesh.userData.rightArm.rotation.x = -swing;
+                mesh.userData.leftArmGlow.rotation.x = swing;
+                mesh.userData.rightArmGlow.rotation.x = -swing;
+                
+                // Animate legs
+                mesh.userData.leftLeg.rotation.x = -swing;
+                mesh.userData.rightLeg.rotation.x = swing;
+                mesh.userData.leftLegGlow.rotation.x = -swing;
+                mesh.userData.rightLegGlow.rotation.x = swing;
+            } else {
+                // Idle - return to neutral
+                mesh.userData.leftArm.rotation.x *= 0.9;
+                mesh.userData.rightArm.rotation.x *= 0.9;
+                mesh.userData.leftLeg.rotation.x *= 0.9;
+                mesh.userData.rightLeg.rotation.x *= 0.9;
+                mesh.userData.leftArmGlow.rotation.x *= 0.9;
+                mesh.userData.rightArmGlow.rotation.x *= 0.9;
+                mesh.userData.leftLegGlow.rotation.x *= 0.9;
+                mesh.userData.rightLegGlow.rotation.x *= 0.9;
+            }
+            
+            mesh.userData.lastPos = { x: data.x, z: data.z };
         }
 
         function removePlayerMesh(playerId) {
@@ -849,20 +938,6 @@
             requestAnimationFrame(gameLoop);
             
             updateMovement();
-            
-            // Animate nebulae (gentle floating and pulsing)
-            const time = Date.now();
-            nebulae.forEach(nebula => {
-                nebula.position.y = nebula.userData.originalY + Math.sin(time * nebula.userData.pulseSpeed + nebula.userData.phase) * 2;
-                nebula.rotation.y += 0.0001;
-                // Pulse the opacity of children
-                nebula.children.forEach((child, i) => {
-                    if (child.material && child.material.opacity) {
-                        const baseOpacity = i === nebula.children.length - 1 ? 0.1 : 0.05;
-                        child.material.opacity = baseOpacity + Math.sin(time * 0.001 + i) * 0.02;
-                    }
-                });
-            });
             
             // Animate cosmic radiation streams (slow rotation)
             radiationStreams.forEach(stream => {
