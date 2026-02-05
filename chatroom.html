@@ -102,24 +102,30 @@
             renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // Static skybox using a large sphere with gradient texture
+            // Skybox - gradient dome from dark floor to bright heavenly ceiling
             const skyCanvas = document.createElement('canvas');
-            skyCanvas.width = 512;
-            skyCanvas.height = 512;
+            skyCanvas.width = 1024;
+            skyCanvas.height = 1024;
             const ctx = skyCanvas.getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, 0, 512);
-            gradient.addColorStop(0, '#fff9f0');
-            gradient.addColorStop(0.3, '#e8d8c8');
-            gradient.addColorStop(0.5, '#8a7a6a');
-            gradient.addColorStop(0.7, '#3a2a2a');
-            gradient.addColorStop(1, '#1a1520');
+            
+            // Radial gradient from center (top of dome) outward
+            const gradient = ctx.createRadialGradient(512, 512, 0, 512, 512, 512);
+            gradient.addColorStop(0, '#fffaf5');
+            gradient.addColorStop(0.15, '#fff0e0');
+            gradient.addColorStop(0.3, '#e8d0b8');
+            gradient.addColorStop(0.5, '#9080708a');
+            gradient.addColorStop(0.7, '#3a3035');
+            gradient.addColorStop(1, '#1a1018');
             ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 512, 512);
+            ctx.fillRect(0, 0, 1024, 1024);
             
             const skyTexture = new THREE.CanvasTexture(skyCanvas);
-            const skyGeo = new THREE.SphereGeometry(500, 32, 32);
+            const skyGeo = new THREE.SphereGeometry(400, 64, 64, 0, Math.PI * 2, 0, Math.PI * 0.6);
             const skyMat = new THREE.MeshBasicMaterial({ map: skyTexture, side: THREE.BackSide });
-            scene.add(new THREE.Mesh(skyGeo, skyMat));
+            const sky = new THREE.Mesh(skyGeo, skyMat);
+            sky.rotation.x = Math.PI;
+            sky.position.y = 5;
+            scene.add(sky);
 
             // Lighting
             scene.add(new THREE.AmbientLight(0x6666aa, 1.2));
