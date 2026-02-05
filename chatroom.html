@@ -6,1205 +6,387 @@
     <title>Void Space</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            overflow: hidden;
-            background: #000;
-            font-family: 'Rajdhani', sans-serif;
-            touch-action: none;
-        }
-        
-        #canvas-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        
-        canvas {
-            display: block;
-        }
-        
-        /* UI Overlay */
-        .ui-overlay {
-            position: fixed;
-            z-index: 100;
-            pointer-events: none;
-        }
-        
-        .ui-overlay * {
-            pointer-events: auto;
-        }
-        
-        /* Header */
-        .header {
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 20px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-        
-        .logo {
-            font-family: 'Orbitron', monospace;
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 0.3em;
-            text-shadow: 0 0 30px rgba(255,255,255,0.5);
-        }
-        
-        .logo span {
-            opacity: 0.4;
-            font-weight: 400;
-        }
-        
-        .player-count {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            color: rgba(255,255,255,0.7);
-            letter-spacing: 0.1em;
-            backdrop-filter: blur(10px);
-        }
-        
-        .player-count strong {
-            color: #fff;
-            font-weight: 500;
-        }
-        
-        /* Controls hint */
-        .controls-hint {
-            bottom: 30px;
-            left: 30px;
-            color: rgba(255,255,255,0.3);
-            font-size: 0.8rem;
-            letter-spacing: 0.05em;
-        }
-        
-        .controls-hint kbd {
-            display: inline-block;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 4px 10px;
-            border-radius: 4px;
-            margin: 0 3px;
-            font-family: 'Orbitron', monospace;
-            font-size: 0.7rem;
-        }
-        
-        /* Mobile joystick */
-        .joystick-zone {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 50%;
-            height: 40%;
-            z-index: 50;
-        }
-        
-        .joystick-container {
-            position: absolute;
-            bottom: 80px;
-            left: 60px;
-            width: 120px;
-            height: 120px;
-            background: rgba(255,255,255,0.05);
-            border: 2px solid rgba(255,255,255,0.15);
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .joystick-knob {
-            width: 50px;
-            height: 50px;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
-            border-radius: 50%;
-            transition: transform 0.05s ease-out;
-        }
-        
-        /* Look zone for camera */
-        .look-zone {
-            position: fixed;
-            bottom: 0;
-            right: 0;
-            width: 50%;
-            height: 40%;
-            z-index: 50;
-        }
-        
-        /* Your color indicator */
-        .your-color {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: rgba(255,255,255,0.5);
-            font-size: 0.8rem;
-            letter-spacing: 0.05em;
-        }
-        
-        .color-orb {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            box-shadow: 0 0 20px currentColor, inset 0 0 10px rgba(255,255,255,0.3);
-        }
-        
-        /* Loading screen */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            transition: opacity 0.8s ease, visibility 0.8s;
-        }
-        
-        .loading-screen.hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-        
-        .loading-text {
-            font-family: 'Orbitron', monospace;
-            font-size: 1rem;
-            color: rgba(255,255,255,0.6);
-            letter-spacing: 0.5em;
-            margin-top: 30px;
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-        
-        .loading-ring {
-            width: 60px;
-            height: 60px;
-            border: 2px solid rgba(255,255,255,0.1);
-            border-top-color: rgba(255,255,255,0.8);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
-        
-        /* Mobile styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #000; font-family: 'Rajdhani', sans-serif; touch-action: none; }
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+        canvas { display: block; }
+        .ui-overlay { position: fixed; z-index: 100; pointer-events: none; }
+        .ui-overlay * { pointer-events: auto; }
+        .header { top: 0; left: 0; right: 0; padding: 20px 30px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .logo { font-family: 'Orbitron', monospace; font-size: 1.4rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.3em; text-shadow: 0 0 30px rgba(255,255,255,0.5); }
+        .logo span { opacity: 0.4; font-weight: 400; }
+        .player-count { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 30px; font-size: 0.85rem; color: rgba(255,255,255,0.7); letter-spacing: 0.1em; backdrop-filter: blur(10px); }
+        .player-count strong { color: #fff; font-weight: 500; }
+        .controls-hint { bottom: 30px; left: 30px; color: rgba(255,255,255,0.3); font-size: 0.8rem; letter-spacing: 0.05em; }
+        .controls-hint kbd { display: inline-block; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 4px; margin: 0 3px; font-family: 'Orbitron', monospace; font-size: 0.7rem; }
+        .joystick-zone { position: fixed; bottom: 0; left: 0; width: 50%; height: 40%; z-index: 50; }
+        .joystick-container { position: absolute; bottom: 80px; left: 60px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 50%; display: none; align-items: center; justify-content: center; }
+        .joystick-knob { width: 50px; height: 50px; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(255,255,255,0.1)); border-radius: 50%; }
+        .look-zone { position: fixed; bottom: 0; right: 0; width: 50%; height: 40%; z-index: 50; }
+        .your-color { position: fixed; bottom: 30px; right: 30px; display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.5); font-size: 0.8rem; letter-spacing: 0.05em; }
+        .color-orb { width: 24px; height: 24px; border-radius: 50%; box-shadow: 0 0 20px currentColor, inset 0 0 10px rgba(255,255,255,0.3); }
+        .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; transition: opacity 0.8s ease, visibility 0.8s; }
+        .loading-screen.hidden { opacity: 0; visibility: hidden; }
+        .loading-text { font-family: 'Orbitron', monospace; font-size: 1rem; color: rgba(255,255,255,0.6); letter-spacing: 0.5em; margin-top: 30px; animation: pulse 1.5s ease-in-out infinite; }
+        .loading-ring { width: 60px; height: 60px; border: 2px solid rgba(255,255,255,0.1); border-top-color: rgba(255,255,255,0.8); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
         @media (max-width: 768px) {
-            .header {
-                padding: 15px 20px;
-            }
-            
-            .logo {
-                font-size: 1rem;
-            }
-            
-            .player-count {
-                font-size: 0.75rem;
-                padding: 8px 15px;
-            }
-            
-            .controls-hint {
-                display: none;
-            }
-            
-            .joystick-container {
-                display: flex;
-            }
-            
-            .your-color {
-                bottom: auto;
-                top: 70px;
-                right: 20px;
-            }
-        }
-        
-        /* Name tags */
-        .nametag {
-            position: absolute;
-            color: #fff;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 12px;
-            text-align: center;
-            pointer-events: none;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-            white-space: nowrap;
-            transform: translate(-50%, -100%);
-            opacity: 0.8;
+            .header { padding: 15px 20px; }
+            .logo { font-size: 1rem; }
+            .player-count { font-size: 0.75rem; padding: 8px 15px; }
+            .controls-hint { display: none; }
+            .joystick-container { display: flex; }
+            .your-color { bottom: auto; top: 70px; right: 20px; }
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
     <div class="loading-screen" id="loading">
         <div class="loading-ring"></div>
         <div class="loading-text">ENTERING VOID</div>
     </div>
-
-    <!-- 3D Canvas -->
     <div id="canvas-container"></div>
-    
-    <!-- UI Overlays -->
     <div class="ui-overlay header">
         <div class="logo">VOID<span>SPACE</span></div>
-        <div class="player-count">
-            <strong id="playerCount">0</strong> IN VOID
-        </div>
+        <div class="player-count"><strong id="playerCount">0</strong> IN VOID</div>
     </div>
-    
     <div class="ui-overlay controls-hint">
         <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> MOVE · <kbd>MOUSE</kbd> LOOK
     </div>
-    
-    <div class="your-color">
-        YOUR ESSENCE <div class="color-orb" id="yourColor"></div>
-    </div>
-    
-    <!-- Mobile Controls -->
+    <div class="your-color">YOUR ESSENCE <div class="color-orb" id="yourColor"></div></div>
     <div class="joystick-zone" id="joystickZone">
         <div class="joystick-container" id="joystickContainer">
             <div class="joystick-knob" id="joystickKnob"></div>
         </div>
     </div>
     <div class="look-zone" id="lookZone"></div>
-    
-    <!-- Nametags container -->
-    <div id="nametags"></div>
 
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    
-    <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // Firebase Configuration
-        const firebaseConfig = {
+        firebase.initializeApp({
             apiKey: "AIzaSyDI9HGn4Dzd00Q_zLQZMRapI3Z8wX7ltHw",
             authDomain: "interact-mc.firebaseapp.com",
             databaseURL: "https://interact-mc-default-rtdb.firebaseio.com",
             projectId: "interact-mc",
             storageBucket: "interact-mc.firebasestorage.app",
             messagingSenderId: "336656676684",
-            appId: "1:336656676684:web:8b348d7a2a9529b42ac1e9",
-            measurementId: "G-4W59B6XST2"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+            appId: "1:336656676684:web:8b348d7a2a9529b42ac1e9"
+        });
         const database = firebase.database();
 
-        // ============== GAME STATE ==============
         const state = {
             playerId: 'player_' + Math.random().toString(36).substr(2, 9),
-            playerColor: generateVibrantColor(),
+            playerColor: `hsl(${Math.random()*360}, ${70+Math.random()*30}%, ${50+Math.random()*20}%)`,
             position: { x: 0, y: 2, z: 0 },
             rotation: { x: 0, y: 0 },
-            velocity: { x: 0, y: 0, z: 0 },
+            velocity: { x: 0, z: 0 },
             players: {},
             keys: { w: false, a: false, s: false, d: false, shift: false },
-            isMobile: /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-            joystick: { active: false, x: 0, y: 0 },
-            lookDelta: { x: 0, y: 0 },
-            mouseSensitivity: 0.002,
-            touchSensitivity: 0.005,
-            moveSpeed: 0.15,
-            friction: 0.85
+            isMobile: /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
+            joystick: { active: false, x: 0, y: 0 }
         };
 
-        // Generate vibrant, distinct colors
-        function generateVibrantColor() {
-            const hue = Math.random() * 360;
-            const saturation = 70 + Math.random() * 30;
-            const lightness = 50 + Math.random() * 20;
-            return hslToHex(hue, saturation, lightness);
-        }
-
-        function hslToHex(h, s, l) {
-            s /= 100;
-            l /= 100;
-            const a = s * Math.min(l, 1 - l);
-            const f = n => {
-                const k = (n + h / 30) % 12;
-                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-                return Math.round(255 * color).toString(16).padStart(2, '0');
-            };
-            return `#${f(0)}${f(8)}${f(4)}`;
-        }
-
-        // ============== THREE.JS SETUP ==============
-        let scene, camera, renderer, playerMeshes = {};
+        let scene, camera, renderer, playerMeshes = {}, radiationStreams = [];
 
         function initThree() {
-            // Scene
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0xfff8f0, 0.006);
+            camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
+            camera.position.set(0, 2, 0);
 
-            // Camera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(state.position.x, state.position.y, state.position.z);
-
-            // Renderer
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.setClearColor(0x1a1520);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(innerWidth, innerHeight);
+            renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // Lighting - bright and visible
-            const ambientLight = new THREE.AmbientLight(0x6666aa, 1.2);
-            scene.add(ambientLight);
+            // Static skybox using a large sphere with gradient texture
+            const skyCanvas = document.createElement('canvas');
+            skyCanvas.width = 512;
+            skyCanvas.height = 512;
+            const ctx = skyCanvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 512);
+            gradient.addColorStop(0, '#fff9f0');
+            gradient.addColorStop(0.3, '#e8d8c8');
+            gradient.addColorStop(0.5, '#8a7a6a');
+            gradient.addColorStop(0.7, '#3a2a2a');
+            gradient.addColorStop(1, '#1a1520');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 512, 512);
+            
+            const skyTexture = new THREE.CanvasTexture(skyCanvas);
+            const skyGeo = new THREE.SphereGeometry(500, 32, 32);
+            const skyMat = new THREE.MeshBasicMaterial({ map: skyTexture, side: THREE.BackSide });
+            scene.add(new THREE.Mesh(skyGeo, skyMat));
 
-            const pointLight = new THREE.PointLight(0xffffff, 1.2, 200);
-            pointLight.position.set(0, 40, 0);
-            scene.add(pointLight);
-            
-            // Hemisphere light for even illumination
-            const hemiLight = new THREE.HemisphereLight(0x8888cc, 0x444466, 1.0);
-            scene.add(hemiLight);
-            
-            // Violet accent light
-            const violetLight = new THREE.PointLight(0xaa77ff, 0.8, 250);
-            violetLight.position.set(-50, 60, -50);
-            scene.add(violetLight);
-            
-            // Warm tan light from the other side
-            const tanLight = new THREE.PointLight(0xffcc88, 0.6, 250);
-            tanLight.position.set(60, 50, 60);
-            scene.add(tanLight);
+            // Lighting
+            scene.add(new THREE.AmbientLight(0x6666aa, 1.2));
+            scene.add(new THREE.HemisphereLight(0xfff8e0, 0x444466, 1.2));
+            const sunLight = new THREE.DirectionalLight(0xfff5e6, 1);
+            sunLight.position.set(0, 100, 0);
+            scene.add(sunLight);
 
-            // Ground grid
             createEnvironment();
-
-            // Handle resize
-            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('resize', () => {
+                camera.aspect = innerWidth / innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(innerWidth, innerHeight);
+            });
         }
 
         function createEnvironment() {
-            // Marble floor grid
-            const gridHelper = new THREE.GridHelper(200, 50, 0x8a8070, 0x3a3530);
-            gridHelper.position.y = 0;
-            scene.add(gridHelper);
-            
-            // Add a subtle floor plane
-            const floorGeometry = new THREE.PlaneGeometry(200, 200);
-            const floorMaterial = new THREE.MeshStandardMaterial({
-                color: 0x2a2520,
-                metalness: 0.2,
-                roughness: 0.8
-            });
-            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-            floor.rotation.x = -Math.PI / 2;
-            floor.position.y = -0.01;
-            scene.add(floor);
-
-            // Scattered ambient particles (stars)
-            const particleCount = 800;
-            const particleGeometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            const colors = new Float32Array(particleCount * 3);
-            
-            for (let i = 0; i < particleCount; i++) {
-                positions[i * 3] = (Math.random() - 0.5) * 300;
-                positions[i * 3 + 1] = Math.random() * 80 + 5;
-                positions[i * 3 + 2] = (Math.random() - 0.5) * 300;
-                
-                // Mix of white, violet, and tan stars
-                const colorChoice = Math.random();
-                if (colorChoice < 0.5) {
-                    colors[i * 3] = 0.9; colors[i * 3 + 1] = 0.85; colors[i * 3 + 2] = 1.0; // White-violet
-                } else if (colorChoice < 0.75) {
-                    colors[i * 3] = 0.7; colors[i * 3 + 1] = 0.5; colors[i * 3 + 2] = 1.0; // Violet
-                } else {
-                    colors[i * 3] = 1.0; colors[i * 3 + 1] = 0.9; colors[i * 3 + 2] = 0.7; // Tan
-                }
-            }
-            
-            particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            
-            const particleMaterial = new THREE.PointsMaterial({
-                size: 0.15,
-                transparent: true,
-                opacity: 0.8,
-                sizeAttenuation: true,
-                vertexColors: true
-            });
-            
-            const particles = new THREE.Points(particleGeometry, particleMaterial);
-            scene.add(particles);
-
-            // Tan cosmic radiation clouds (as particle clusters, not nebulae)
-            createCosmicRadiation();
-
-            // Grand Roman pillars reaching into the heavens
-            createRomanPillars();
-            
-            // Heavenly fog above
-            createHeavenlyFog();
-        }
-        
-        function createRomanPillars() {
-            const pillarCount = 24;
-            const ringRadii = [30, 55, 85];
-            
-            ringRadii.forEach((radius, ringIndex) => {
-                const pillarsInRing = pillarCount - ringIndex * 6;
-                
-                for (let i = 0; i < pillarsInRing; i++) {
-                    const angle = (i / pillarsInRing) * Math.PI * 2 + ringIndex * 0.2;
-                    const x = Math.cos(angle) * radius;
-                    const z = Math.sin(angle) * radius;
-                    
-                    createRomanPillar(x, z, ringIndex);
-                }
-            });
-        }
-        
-        function createRomanPillar(x, z, tier) {
-            const pillarGroup = new THREE.Group();
-            const pillarHeight = 60 + tier * 20;
-            
-            // Marble-like material
-            const marbleMaterial = new THREE.MeshStandardMaterial({
-                color: 0xf5f0e6,
-                emissive: 0x222218,
-                emissiveIntensity: 0.1,
-                metalness: 0.1,
-                roughness: 0.6
-            });
-            
-            const goldMaterial = new THREE.MeshStandardMaterial({
-                color: 0xd4af37,
-                emissive: 0x8b7320,
-                emissiveIntensity: 0.3,
-                metalness: 0.8,
-                roughness: 0.3
-            });
-            
-            // Base (square plinth)
-            const baseGeometry = new THREE.BoxGeometry(2.5, 1, 2.5);
-            const base = new THREE.Mesh(baseGeometry, marbleMaterial);
-            base.position.y = 0.5;
-            pillarGroup.add(base);
-            
-            // Second base tier
-            const base2Geometry = new THREE.BoxGeometry(2.2, 0.5, 2.2);
-            const base2 = new THREE.Mesh(base2Geometry, marbleMaterial);
-            base2.position.y = 1.25;
-            pillarGroup.add(base2);
-            
-            // Torus base decoration
-            const torusGeometry = new THREE.TorusGeometry(1, 0.15, 8, 24);
-            const torus = new THREE.Mesh(torusGeometry, goldMaterial);
-            torus.rotation.x = Math.PI / 2;
-            torus.position.y = 1.7;
-            pillarGroup.add(torus);
-            
-            // Main column (fluted effect with multiple cylinders)
-            const columnRadius = 0.8;
-            const fluteCount = 20;
-            
-            // Main cylinder
-            const columnGeometry = new THREE.CylinderGeometry(columnRadius, columnRadius * 1.1, pillarHeight, 24);
-            const column = new THREE.Mesh(columnGeometry, marbleMaterial);
-            column.position.y = 2 + pillarHeight / 2;
-            pillarGroup.add(column);
-            
-            // Fluting (vertical grooves)
-            for (let f = 0; f < fluteCount; f++) {
-                const fluteAngle = (f / fluteCount) * Math.PI * 2;
-                const fluteGeometry = new THREE.CylinderGeometry(0.08, 0.08, pillarHeight - 2, 8);
-                const fluteMaterial = new THREE.MeshStandardMaterial({
-                    color: 0xe8e0d0,
-                    metalness: 0.1,
-                    roughness: 0.7
-                });
-                const flute = new THREE.Mesh(fluteGeometry, fluteMaterial);
-                flute.position.set(
-                    Math.cos(fluteAngle) * (columnRadius + 0.02),
-                    2 + pillarHeight / 2,
-                    Math.sin(fluteAngle) * (columnRadius + 0.02)
-                );
-                pillarGroup.add(flute);
-            }
-            
-            // Capital (Corinthian-style simplified)
-            const capitalBase = new THREE.Mesh(
-                new THREE.CylinderGeometry(1, columnRadius, 1, 24),
-                marbleMaterial
+            // Floor
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(200, 200),
+                new THREE.MeshStandardMaterial({ color: 0x2a2520, metalness: 0.2, roughness: 0.8 })
             );
-            capitalBase.position.y = 2 + pillarHeight + 0.5;
-            pillarGroup.add(capitalBase);
-            
-            // Capital decorative rings
-            for (let r = 0; r < 3; r++) {
-                const ringGeom = new THREE.TorusGeometry(0.9 - r * 0.1, 0.08, 8, 24);
-                const ring = new THREE.Mesh(ringGeom, goldMaterial);
-                ring.rotation.x = Math.PI / 2;
-                ring.position.y = 2 + pillarHeight + 0.3 + r * 0.3;
-                pillarGroup.add(ring);
-            }
-            
-            // Abacus (top slab)
-            const abacusGeometry = new THREE.BoxGeometry(2.2, 0.4, 2.2);
-            const abacus = new THREE.Mesh(abacusGeometry, marbleMaterial);
-            abacus.position.y = 2 + pillarHeight + 1.3;
-            pillarGroup.add(abacus);
-            
-            // Ethereal glow at the top (fading into heaven)
-            const glowGeometry = new THREE.CylinderGeometry(1.5, 0.5, 15, 16, 1, true);
-            const glowMaterial = new THREE.MeshBasicMaterial({
-                color: 0xfff8e7,
-                transparent: true,
-                opacity: 0.08,
-                side: THREE.DoubleSide
-            });
-            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-            glow.position.y = 2 + pillarHeight + 8;
-            pillarGroup.add(glow);
-            
-            pillarGroup.position.set(x, 0, z);
-            scene.add(pillarGroup);
-        }
-        
-        function createHeavenlyFog() {
-            // Multiple layers of fog planes at different heights
-            const fogLayers = [
-                { height: 50, opacity: 0.03, size: 400 },
-                { height: 60, opacity: 0.05, size: 450 },
-                { height: 70, opacity: 0.08, size: 500 },
-                { height: 80, opacity: 0.12, size: 550 },
-                { height: 95, opacity: 0.2, size: 600 },
-                { height: 110, opacity: 0.35, size: 650 },
-                { height: 130, opacity: 0.5, size: 700 },
-            ];
-            
-            fogLayers.forEach(layer => {
-                const fogGeometry = new THREE.PlaneGeometry(layer.size, layer.size);
-                const fogMaterial = new THREE.MeshBasicMaterial({
-                    color: 0xfff9f0,
-                    transparent: true,
-                    opacity: layer.opacity,
-                    side: THREE.DoubleSide
-                });
-                const fogPlane = new THREE.Mesh(fogGeometry, fogMaterial);
-                fogPlane.rotation.x = Math.PI / 2;
-                fogPlane.position.y = layer.height;
-                scene.add(fogPlane);
-            });
-            
-            // Volumetric fog particles drifting
-            const fogParticleCount = 1000;
-            const fogParticleGeometry = new THREE.BufferGeometry();
-            const fogPositions = new Float32Array(fogParticleCount * 3);
-            const fogSizes = new Float32Array(fogParticleCount);
-            
-            for (let i = 0; i < fogParticleCount; i++) {
-                fogPositions[i * 3] = (Math.random() - 0.5) * 300;
-                fogPositions[i * 3 + 1] = 40 + Math.random() * 70;
-                fogPositions[i * 3 + 2] = (Math.random() - 0.5) * 300;
-                fogSizes[i] = 2 + Math.random() * 4;
-            }
-            
-            fogParticleGeometry.setAttribute('position', new THREE.BufferAttribute(fogPositions, 3));
-            
-            const fogParticleMaterial = new THREE.PointsMaterial({
-                color: 0xfffff5,
-                size: 3,
-                transparent: true,
-                opacity: 0.15,
-                sizeAttenuation: true
-            });
-            
-            const fogParticles = new THREE.Points(fogParticleGeometry, fogParticleMaterial);
-            fogParticles.userData.isHeavenlyFog = true;
-            scene.add(fogParticles);
-            heavenlyFogParticles = fogParticles;
-            
-            // Golden light rays from above
-            for (let i = 0; i < 12; i++) {
-                const angle = (i / 12) * Math.PI * 2;
-                const radius = 20 + Math.random() * 60;
-                
-                const rayGeometry = new THREE.CylinderGeometry(0.5, 3, 80, 8, 1, true);
-                const rayMaterial = new THREE.MeshBasicMaterial({
-                    color: 0xfff4d4,
-                    transparent: true,
-                    opacity: 0.04,
-                    side: THREE.DoubleSide
-                });
-                const ray = new THREE.Mesh(rayGeometry, rayMaterial);
-                ray.position.set(
-                    Math.cos(angle) * radius,
-                    90,
-                    Math.sin(angle) * radius
-                );
-                scene.add(ray);
-            }
-            
-            // Bright heavenly light from above
-            const heavenLight = new THREE.PointLight(0xfff8e0, 1.5, 300);
-            heavenLight.position.set(0, 120, 0);
-            scene.add(heavenLight);
-            
-            const heavenLight2 = new THREE.DirectionalLight(0xfff5e6, 0.8);
-            heavenLight2.position.set(0, 100, 0);
-            scene.add(heavenLight2);
-        }
-        
-        let heavenlyFogParticles = null;
+            floor.rotation.x = -Math.PI / 2;
+            scene.add(floor);
+            scene.add(new THREE.GridHelper(200, 50, 0x8a8070, 0x3a3530));
 
-        // Create cosmic radiation streams
-        function createCosmicRadiation() {
-            const streamCount = 8;
+            // Roman pillars
+            const marbleMat = new THREE.MeshStandardMaterial({ color: 0xf5f0e6, emissive: 0x222218, emissiveIntensity: 0.1 });
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, emissive: 0x8b7320, emissiveIntensity: 0.3, metalness: 0.8 });
             
-            for (let s = 0; s < streamCount; s++) {
-                const particleCount = 300;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                
-                const startAngle = (s / streamCount) * Math.PI * 2;
-                const radius = 40 + Math.random() * 50;
-                const height = 5 + Math.random() * 25;
-                
-                for (let i = 0; i < particleCount; i++) {
-                    const t = i / particleCount;
-                    const angle = startAngle + t * Math.PI * 0.6;
-                    const r = radius + Math.sin(t * Math.PI * 5) * 15;
+            [30, 55, 85].forEach((radius, tier) => {
+                const count = 24 - tier * 6;
+                const height = 60 + tier * 20;
+                for (let i = 0; i < count; i++) {
+                    const angle = (i / count) * Math.PI * 2 + tier * 0.2;
+                    const x = Math.cos(angle) * radius, z = Math.sin(angle) * radius;
+                    const pillar = new THREE.Group();
                     
-                    positions[i * 3] = Math.cos(angle) * r + (Math.random() - 0.5) * 10;
-                    positions[i * 3 + 1] = height + t * 25 + (Math.random() - 0.5) * 6;
-                    positions[i * 3 + 2] = Math.sin(angle) * r + (Math.random() - 0.5) * 10;
+                    // Base
+                    const base = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.5, 2.5), marbleMat);
+                    base.position.y = 0.75;
+                    pillar.add(base);
+                    
+                    // Column
+                    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.88, height, 16), marbleMat);
+                    col.position.y = 1.5 + height / 2;
+                    pillar.add(col);
+                    
+                    // Capital
+                    const cap = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 0.8, 1.5, 16), marbleMat);
+                    cap.position.y = 1.5 + height + 0.75;
+                    pillar.add(cap);
+                    
+                    // Gold ring
+                    const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.12, 8, 24), goldMat);
+                    ring.rotation.x = Math.PI / 2;
+                    ring.position.y = 1.5 + height + 0.5;
+                    pillar.add(ring);
+                    
+                    pillar.position.set(x, 0, z);
+                    scene.add(pillar);
+                }
+            });
+
+            // Cosmic radiation streams
+            for (let s = 0; s < 6; s++) {
+                const positions = new Float32Array(200 * 3);
+                const startAngle = (s / 6) * Math.PI * 2;
+                const radius = 50 + Math.random() * 40;
+                
+                for (let i = 0; i < 200; i++) {
+                    const t = i / 200;
+                    const angle = startAngle + t * Math.PI * 0.5;
+                    const r = radius + Math.sin(t * Math.PI * 4) * 12;
+                    positions[i * 3] = Math.cos(angle) * r + (Math.random() - 0.5) * 8;
+                    positions[i * 3 + 1] = 8 + t * 30 + (Math.random() - 0.5) * 5;
+                    positions[i * 3 + 2] = Math.sin(angle) * r + (Math.random() - 0.5) * 8;
                 }
                 
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                
-                const material = new THREE.PointsMaterial({
-                    color: s % 2 === 0 ? 0xffcc77 : 0xeebb88,
-                    size: 0.4,
-                    transparent: true,
-                    opacity: 0.7,
-                    sizeAttenuation: true
-                });
-                
-                const stream = new THREE.Points(geometry, material);
-                stream.userData = { 
-                    rotationSpeed: 0.00015 + Math.random() * 0.00025,
-                    direction: s % 2 === 0 ? 1 : -1
-                };
+                const geo = new THREE.BufferGeometry();
+                geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const stream = new THREE.Points(geo, new THREE.PointsMaterial({
+                    color: s % 2 ? 0xffcc77 : 0xeebb88, size: 0.4, transparent: true, opacity: 0.7
+                }));
+                stream.userData = { speed: 0.0002 + Math.random() * 0.0002, dir: s % 2 ? 1 : -1 };
                 scene.add(stream);
                 radiationStreams.push(stream);
             }
         }
 
-        // Animation arrays
-        let radiationStreams = [];
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        // ============== PLAYER RENDERING ==============
         function createPlayerMesh(color) {
-            const playerGroup = new THREE.Group();
-            
-            // Material for glowing neon effect
-            const neonMaterial = new THREE.MeshStandardMaterial({
-                color: color,
-                emissive: color,
-                emissiveIntensity: 0.8,
-                metalness: 0.3,
-                roughness: 0.4
-            });
-            
-            const glowMaterial = new THREE.MeshBasicMaterial({
-                color: color,
-                transparent: true,
-                opacity: 0.3
-            });
+            const g = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.8 });
 
-            // Head (sphere)
-            const headGeometry = new THREE.SphereGeometry(0.25, 16, 16);
-            const head = new THREE.Mesh(headGeometry, neonMaterial);
-            head.position.y = 1.6;
-            playerGroup.add(head);
+            // Head
+            g.add(new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), mat));
+            g.children[0].position.y = 1.6;
             
-            // Head glow
-            const headGlow = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), glowMaterial);
-            headGlow.position.y = 1.6;
-            playerGroup.add(headGlow);
-
-            // Torso (capsule-like: cylinder + spheres)
-            const torsoGeometry = new THREE.CylinderGeometry(0.2, 0.15, 0.6, 8);
-            const torso = new THREE.Mesh(torsoGeometry, neonMaterial);
+            // Torso
+            const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.6, 8), mat);
             torso.position.y = 1.1;
-            playerGroup.add(torso);
-            
-            // Torso glow
-            const torsoGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.21, 0.65, 8), glowMaterial);
-            torsoGlow.position.y = 1.1;
-            playerGroup.add(torsoGlow);
+            g.add(torso);
 
-            // Arms
-            const armGeometry = new THREE.CylinderGeometry(0.06, 0.05, 0.5, 8);
+            // Arms & Legs helper
+            const limb = (px, py, rz, len) => {
+                const m = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, len, 6), mat);
+                m.position.set(px, py, 0);
+                m.rotation.z = rz;
+                return m;
+            };
             
-            // Left arm
-            const leftArm = new THREE.Mesh(armGeometry, neonMaterial);
-            leftArm.position.set(-0.3, 1.1, 0);
-            leftArm.rotation.z = 0.2;
-            playerGroup.add(leftArm);
-            
-            const leftArmGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.52, 8), glowMaterial);
-            leftArmGlow.position.set(-0.3, 1.1, 0);
-            leftArmGlow.rotation.z = 0.2;
-            playerGroup.add(leftArmGlow);
-            
-            // Right arm
-            const rightArm = new THREE.Mesh(armGeometry, neonMaterial);
-            rightArm.position.set(0.3, 1.1, 0);
-            rightArm.rotation.z = -0.2;
-            playerGroup.add(rightArm);
-            
-            const rightArmGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.52, 8), glowMaterial);
-            rightArmGlow.position.set(0.3, 1.1, 0);
-            rightArmGlow.rotation.z = -0.2;
-            playerGroup.add(rightArmGlow);
+            g.userData.leftArm = limb(-0.3, 1.1, 0.2, 0.5); g.add(g.userData.leftArm);
+            g.userData.rightArm = limb(0.3, 1.1, -0.2, 0.5); g.add(g.userData.rightArm);
+            g.userData.leftLeg = limb(-0.1, 0.5, 0, 0.6); g.add(g.userData.leftLeg);
+            g.userData.rightLeg = limb(0.1, 0.5, 0, 0.6); g.add(g.userData.rightLeg);
 
-            // Legs
-            const legGeometry = new THREE.CylinderGeometry(0.07, 0.05, 0.6, 8);
-            
-            // Left leg
-            const leftLeg = new THREE.Mesh(legGeometry, neonMaterial);
-            leftLeg.position.set(-0.1, 0.5, 0);
-            playerGroup.add(leftLeg);
-            
-            const leftLegGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.62, 8), glowMaterial);
-            leftLegGlow.position.set(-0.1, 0.5, 0);
-            playerGroup.add(leftLegGlow);
-            
-            // Right leg
-            const rightLeg = new THREE.Mesh(legGeometry, neonMaterial);
-            rightLeg.position.set(0.1, 0.5, 0);
-            playerGroup.add(rightLeg);
-            
-            const rightLegGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.62, 8), glowMaterial);
-            rightLegGlow.position.set(0.1, 0.5, 0);
-            playerGroup.add(rightLegGlow);
-
-            // Hands (small spheres)
-            const handGeometry = new THREE.SphereGeometry(0.06, 8, 8);
-            
-            const leftHand = new THREE.Mesh(handGeometry, neonMaterial);
-            leftHand.position.set(-0.35, 0.82, 0);
-            playerGroup.add(leftHand);
-            
-            const rightHand = new THREE.Mesh(handGeometry, neonMaterial);
-            rightHand.position.set(0.35, 0.82, 0);
-            playerGroup.add(rightHand);
-
-            // Feet (small spheres)
-            const footGeometry = new THREE.SphereGeometry(0.07, 8, 8);
-            
-            const leftFoot = new THREE.Mesh(footGeometry, neonMaterial);
-            leftFoot.position.set(-0.1, 0.18, 0.03);
-            playerGroup.add(leftFoot);
-            
-            const rightFoot = new THREE.Mesh(footGeometry, neonMaterial);
-            rightFoot.position.set(0.1, 0.18, 0.03);
-            playerGroup.add(rightFoot);
-
-            // Point light for neon glow effect
-            const light = new THREE.PointLight(color, 0.8, 8);
+            const light = new THREE.PointLight(color, 0.6, 8);
             light.position.y = 1.1;
-            playerGroup.add(light);
+            g.add(light);
 
-            // Store references for animation
-            playerGroup.userData.leftArm = leftArm;
-            playerGroup.userData.rightArm = rightArm;
-            playerGroup.userData.leftLeg = leftLeg;
-            playerGroup.userData.rightLeg = rightLeg;
-            playerGroup.userData.leftArmGlow = leftArmGlow;
-            playerGroup.userData.rightArmGlow = rightArmGlow;
-            playerGroup.userData.leftLegGlow = leftLegGlow;
-            playerGroup.userData.rightLegGlow = rightLegGlow;
-            playerGroup.userData.lastPos = { x: 0, z: 0 };
-            playerGroup.userData.animPhase = Math.random() * Math.PI * 2;
-
-            return playerGroup;
+            g.userData.lastPos = { x: 0, z: 0 };
+            g.userData.phase = 0;
+            return g;
         }
 
-        function updatePlayerMesh(playerId, data) {
-            if (playerId === state.playerId) return;
-
-            if (!playerMeshes[playerId]) {
-                playerMeshes[playerId] = createPlayerMesh(data.color);
-                scene.add(playerMeshes[playerId]);
+        function updatePlayerMesh(id, data) {
+            if (id === state.playerId) return;
+            if (!playerMeshes[id]) {
+                playerMeshes[id] = createPlayerMesh(data.color);
+                scene.add(playerMeshes[id]);
             }
 
-            const mesh = playerMeshes[playerId];
-            const targetPos = new THREE.Vector3(data.x, data.y - 1.8, data.z);
-            
-            // Calculate movement for animation
-            const lastPos = mesh.userData.lastPos;
-            const dx = data.x - lastPos.x;
-            const dz = data.z - lastPos.z;
-            const isMoving = Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01;
-            
-            // Smooth position interpolation
-            mesh.position.lerp(targetPos, 0.15);
-            
-            // Rotate to face movement direction
-            if (isMoving) {
-                const targetRotation = Math.atan2(dx, dz);
-                mesh.rotation.y = targetRotation;
-                
-                // Walking animation
-                mesh.userData.animPhase += 0.2;
-                const swing = Math.sin(mesh.userData.animPhase) * 0.4;
-                
-                // Animate arms
-                mesh.userData.leftArm.rotation.x = swing;
-                mesh.userData.rightArm.rotation.x = -swing;
-                mesh.userData.leftArmGlow.rotation.x = swing;
-                mesh.userData.rightArmGlow.rotation.x = -swing;
-                
-                // Animate legs
-                mesh.userData.leftLeg.rotation.x = -swing;
-                mesh.userData.rightLeg.rotation.x = swing;
-                mesh.userData.leftLegGlow.rotation.x = -swing;
-                mesh.userData.rightLegGlow.rotation.x = swing;
+            const m = playerMeshes[id];
+            m.position.lerp(new THREE.Vector3(data.x, data.y - 1.8, data.z), 0.15);
+
+            const dx = data.x - m.userData.lastPos.x, dz = data.z - m.userData.lastPos.z;
+            if (Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01) {
+                m.rotation.y = Math.atan2(dx, dz);
+                m.userData.phase += 0.2;
+                const swing = Math.sin(m.userData.phase) * 0.4;
+                m.userData.leftArm.rotation.x = swing;
+                m.userData.rightArm.rotation.x = -swing;
+                m.userData.leftLeg.rotation.x = -swing;
+                m.userData.rightLeg.rotation.x = swing;
             } else {
-                // Idle - return to neutral
-                mesh.userData.leftArm.rotation.x *= 0.9;
-                mesh.userData.rightArm.rotation.x *= 0.9;
-                mesh.userData.leftLeg.rotation.x *= 0.9;
-                mesh.userData.rightLeg.rotation.x *= 0.9;
-                mesh.userData.leftArmGlow.rotation.x *= 0.9;
-                mesh.userData.rightArmGlow.rotation.x *= 0.9;
-                mesh.userData.leftLegGlow.rotation.x *= 0.9;
-                mesh.userData.rightLegGlow.rotation.x *= 0.9;
+                ['leftArm', 'rightArm', 'leftLeg', 'rightLeg'].forEach(l => m.userData[l].rotation.x *= 0.9);
             }
-            
-            mesh.userData.lastPos = { x: data.x, z: data.z };
+            m.userData.lastPos = { x: data.x, z: data.z };
         }
 
-        function removePlayerMesh(playerId) {
-            if (playerMeshes[playerId]) {
-                scene.remove(playerMeshes[playerId]);
-                delete playerMeshes[playerId];
-            }
-        }
-
-        // ============== FIREBASE SYNC ==============
         function initFirebase() {
-            const playerRef = database.ref('players/' + state.playerId);
-            const playersRef = database.ref('players');
+            const ref = database.ref('players/' + state.playerId);
+            ref.set({ x: 0, y: 2, z: 0, color: state.playerColor, lastUpdate: firebase.database.ServerValue.TIMESTAMP });
+            ref.onDisconnect().remove();
 
-            // Set initial position
-            playerRef.set({
-                x: state.position.x,
-                y: state.position.y,
-                z: state.position.z,
-                color: state.playerColor,
-                lastUpdate: firebase.database.ServerValue.TIMESTAMP
-            });
-
-            // Remove on disconnect
-            playerRef.onDisconnect().remove();
-
-            // Listen for all players
-            playersRef.on('value', (snapshot) => {
-                const players = snapshot.val() || {};
-                state.players = players;
-                
-                // Update player count
+            database.ref('players').on('value', snap => {
+                const players = snap.val() || {};
                 document.getElementById('playerCount').textContent = Object.keys(players).length;
-
-                // Remove disconnected players
-                for (const id in playerMeshes) {
-                    if (!players[id]) {
-                        removePlayerMesh(id);
-                    }
-                }
-
-                // Update/add players
-                for (const id in players) {
-                    updatePlayerMesh(id, players[id]);
-                }
+                Object.keys(playerMeshes).forEach(id => { if (!players[id]) { scene.remove(playerMeshes[id]); delete playerMeshes[id]; } });
+                Object.entries(players).forEach(([id, data]) => updatePlayerMesh(id, data));
             });
         }
 
-        function syncPosition() {
-            database.ref('players/' + state.playerId).update({
-                x: state.position.x,
-                y: state.position.y,
-                z: state.position.z,
-                lastUpdate: firebase.database.ServerValue.TIMESTAMP
-            });
-        }
-
-        // ============== CONTROLS ==============
         function initControls() {
-            // Keyboard
-            document.addEventListener('keydown', (e) => {
-                const key = e.key.toLowerCase();
-                if (state.keys.hasOwnProperty(key)) {
-                    state.keys[key] = true;
-                }
-                if (e.key === 'Shift') state.keys.shift = true;
-            });
+            const setKey = (e, val) => {
+                const k = e.key.toLowerCase();
+                if (k in state.keys) state.keys[k] = val;
+                if (e.key === 'Shift') state.keys.shift = val;
+            };
+            document.addEventListener('keydown', e => setKey(e, true));
+            document.addEventListener('keyup', e => setKey(e, false));
 
-            document.addEventListener('keyup', (e) => {
-                const key = e.key.toLowerCase();
-                if (state.keys.hasOwnProperty(key)) {
-                    state.keys[key] = false;
-                }
-                if (e.key === 'Shift') state.keys.shift = false;
-            });
-
-            // Mouse look (desktop)
             if (!state.isMobile) {
-                document.addEventListener('click', () => {
-                    renderer.domElement.requestPointerLock();
-                });
-
-                document.addEventListener('mousemove', (e) => {
+                document.addEventListener('click', () => renderer.domElement.requestPointerLock());
+                document.addEventListener('mousemove', e => {
                     if (document.pointerLockElement === renderer.domElement) {
-                        state.rotation.y -= e.movementX * state.mouseSensitivity;
-                        state.rotation.x -= e.movementY * state.mouseSensitivity;
-                        state.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, state.rotation.x));
+                        state.rotation.y -= e.movementX * 0.002;
+                        state.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, state.rotation.x - e.movementY * 0.002));
                     }
                 });
-            }
-
-            // Mobile controls
-            if (state.isMobile) {
-                initMobileControls();
-            }
-        }
-
-        function initMobileControls() {
-            const joystickZone = document.getElementById('joystickZone');
-            const joystickContainer = document.getElementById('joystickContainer');
-            const joystickKnob = document.getElementById('joystickKnob');
-            const lookZone = document.getElementById('lookZone');
-
-            let joystickOrigin = { x: 0, y: 0 };
-            let lookOrigin = { x: 0, y: 0 };
-            let lookTouchId = null;
-
-            // Joystick touch
-            joystickZone.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                state.joystick.active = true;
-                joystickOrigin = { x: touch.clientX, y: touch.clientY };
-                
-                joystickContainer.style.left = (touch.clientX - 60) + 'px';
-                joystickContainer.style.bottom = (window.innerHeight - touch.clientY - 60) + 'px';
-                joystickContainer.style.display = 'flex';
-            });
-
-            joystickZone.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                if (!state.joystick.active) return;
-                
-                const touch = e.touches[0];
-                const dx = touch.clientX - joystickOrigin.x;
-                const dy = touch.clientY - joystickOrigin.y;
-                const distance = Math.min(Math.sqrt(dx * dx + dy * dy), 50);
-                const angle = Math.atan2(dy, dx);
-                
-                const knobX = Math.cos(angle) * distance;
-                const knobY = Math.sin(angle) * distance;
-                
-                joystickKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
-                
-                state.joystick.x = knobX / 50;
-                state.joystick.y = knobY / 50;
-            });
-
-            joystickZone.addEventListener('touchend', (e) => {
-                state.joystick.active = false;
-                state.joystick.x = 0;
-                state.joystick.y = 0;
-                joystickKnob.style.transform = 'translate(0, 0)';
-                joystickContainer.style.display = 'none';
-            });
-
-            // Look touch
-            lookZone.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const touch = e.changedTouches[0];
-                lookTouchId = touch.identifier;
-                lookOrigin = { x: touch.clientX, y: touch.clientY };
-            });
-
-            lookZone.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                for (let touch of e.changedTouches) {
-                    if (touch.identifier === lookTouchId) {
-                        const dx = touch.clientX - lookOrigin.x;
-                        const dy = touch.clientY - lookOrigin.y;
-                        
-                        state.rotation.y -= dx * state.touchSensitivity;
-                        state.rotation.x -= dy * state.touchSensitivity;
-                        state.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, state.rotation.x));
-                        
-                        lookOrigin = { x: touch.clientX, y: touch.clientY };
-                    }
-                }
-            });
-
-            lookZone.addEventListener('touchend', (e) => {
-                for (let touch of e.changedTouches) {
-                    if (touch.identifier === lookTouchId) {
-                        lookTouchId = null;
-                    }
-                }
-            });
-        }
-
-        // ============== GAME LOOP ==============
-        function updateMovement() {
-            const speed = state.keys.shift ? state.moveSpeed * 1.5 : state.moveSpeed;
-            
-            // Get movement direction from keys or joystick
-            let moveX = 0;
-            let moveZ = 0;
-
-            if (state.isMobile && state.joystick.active) {
-                moveX = state.joystick.x;
-                moveZ = state.joystick.y;
             } else {
-                if (state.keys.w) moveZ -= 1;
-                if (state.keys.s) moveZ += 1;
-                if (state.keys.a) moveX -= 1;
-                if (state.keys.d) moveX += 1;
+                const jZone = document.getElementById('joystickZone');
+                const jCont = document.getElementById('joystickContainer');
+                const jKnob = document.getElementById('joystickKnob');
+                const lZone = document.getElementById('lookZone');
+                let jOrigin = {x:0,y:0}, lOrigin = {x:0,y:0}, lTouchId = null;
+
+                jZone.addEventListener('touchstart', e => {
+                    e.preventDefault();
+                    state.joystick.active = true;
+                    jOrigin = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                    jCont.style.left = (jOrigin.x - 60) + 'px';
+                    jCont.style.bottom = (innerHeight - jOrigin.y - 60) + 'px';
+                    jCont.style.display = 'flex';
+                });
+                jZone.addEventListener('touchmove', e => {
+                    if (!state.joystick.active) return;
+                    const dx = e.touches[0].clientX - jOrigin.x, dy = e.touches[0].clientY - jOrigin.y;
+                    const dist = Math.min(Math.hypot(dx, dy), 50), ang = Math.atan2(dy, dx);
+                    jKnob.style.transform = `translate(${Math.cos(ang)*dist}px, ${Math.sin(ang)*dist}px)`;
+                    state.joystick.x = Math.cos(ang) * dist / 50;
+                    state.joystick.y = Math.sin(ang) * dist / 50;
+                });
+                jZone.addEventListener('touchend', () => {
+                    state.joystick = { active: false, x: 0, y: 0 };
+                    jKnob.style.transform = 'translate(0,0)';
+                    jCont.style.display = 'none';
+                });
+
+                lZone.addEventListener('touchstart', e => { lTouchId = e.changedTouches[0].identifier; lOrigin = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY }; });
+                lZone.addEventListener('touchmove', e => {
+                    for (let t of e.changedTouches) {
+                        if (t.identifier === lTouchId) {
+                            state.rotation.y -= (t.clientX - lOrigin.x) * 0.005;
+                            state.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, state.rotation.x - (t.clientY - lOrigin.y) * 0.005));
+                            lOrigin = { x: t.clientX, y: t.clientY };
+                        }
+                    }
+                });
+                lZone.addEventListener('touchend', e => { for (let t of e.changedTouches) if (t.identifier === lTouchId) lTouchId = null; });
             }
-
-            // Normalize diagonal movement
-            const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
-            if (length > 0) {
-                moveX /= length;
-                moveZ /= length;
-            }
-
-            // Apply rotation to movement (forward is negative Z in Three.js)
-            const sin = Math.sin(state.rotation.y);
-            const cos = Math.cos(state.rotation.y);
-            
-            // Forward/back aligned with camera direction
-            state.velocity.x += (moveZ * sin + moveX * cos) * speed;
-            state.velocity.z += (moveZ * cos - moveX * sin) * speed;
-
-            // Apply friction
-            state.velocity.x *= state.friction;
-            state.velocity.z *= state.friction;
-
-            // Update position
-            state.position.x += state.velocity.x;
-            state.position.z += state.velocity.z;
-
-            // Update camera
-            camera.position.set(state.position.x, state.position.y, state.position.z);
-            camera.rotation.order = 'YXZ';
-            camera.rotation.y = state.rotation.y;
-            camera.rotation.x = state.rotation.x;
         }
 
         let lastSync = 0;
         function gameLoop() {
             requestAnimationFrame(gameLoop);
+
+            const speed = state.keys.shift ? 0.225 : 0.15;
+            let mx = 0, mz = 0;
+            if (state.isMobile && state.joystick.active) { mx = state.joystick.x; mz = state.joystick.y; }
+            else { if (state.keys.w) mz--; if (state.keys.s) mz++; if (state.keys.a) mx--; if (state.keys.d) mx++; }
             
-            updateMovement();
+            const len = Math.hypot(mx, mz);
+            if (len > 0) { mx /= len; mz /= len; }
             
-            // Animate cosmic radiation streams (slow rotation)
-            radiationStreams.forEach(stream => {
-                stream.rotation.y += stream.userData.rotationSpeed * stream.userData.direction;
-            });
-            
-            // Animate heavenly fog particles (gentle drift)
-            if (heavenlyFogParticles) {
-                const positions = heavenlyFogParticles.geometry.attributes.position.array;
-                const time = Date.now() * 0.0001;
-                
-                for (let i = 0; i < positions.length; i += 3) {
-                    positions[i] += Math.sin(time + i) * 0.02;
-                    positions[i + 2] += Math.cos(time + i) * 0.02;
-                    
-                    // Slowly descend and reset
-                    positions[i + 1] -= 0.01;
-                    if (positions[i + 1] < 40) {
-                        positions[i + 1] = 110;
-                    }
-                }
-                heavenlyFogParticles.geometry.attributes.position.needsUpdate = true;
-            }
-            
-            // Sync position every 50ms
+            const sin = Math.sin(state.rotation.y), cos = Math.cos(state.rotation.y);
+            state.velocity.x = (state.velocity.x + (mz * sin + mx * cos) * speed) * 0.85;
+            state.velocity.z = (state.velocity.z + (mz * cos - mx * sin) * speed) * 0.85;
+            state.position.x += state.velocity.x;
+            state.position.z += state.velocity.z;
+
+            camera.position.set(state.position.x, state.position.y, state.position.z);
+            camera.rotation.order = 'YXZ';
+            camera.rotation.y = state.rotation.y;
+            camera.rotation.x = state.rotation.x;
+
+            radiationStreams.forEach(s => s.rotation.y += s.userData.speed * s.userData.dir);
+
             if (Date.now() - lastSync > 50) {
-                syncPosition();
+                database.ref('players/' + state.playerId).update({ x: state.position.x, y: state.position.y, z: state.position.z, lastUpdate: firebase.database.ServerValue.TIMESTAMP });
                 lastSync = Date.now();
             }
-            
+
             renderer.render(scene, camera);
         }
 
-        // ============== INIT ==============
         function init() {
-            // Set your color indicator
             document.getElementById('yourColor').style.backgroundColor = state.playerColor;
             document.getElementById('yourColor').style.color = state.playerColor;
-
             initThree();
             initControls();
             initFirebase();
-            
-            // Hide loading screen
-            setTimeout(() => {
-                document.getElementById('loading').classList.add('hidden');
-            }, 1500);
-            
+            setTimeout(() => document.getElementById('loading').classList.add('hidden'), 1500);
             gameLoop();
         }
 
-        // Start when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
+        document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
     </script>
 </body>
 </html>
