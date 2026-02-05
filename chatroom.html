@@ -696,12 +696,13 @@
                 moveZ /= length;
             }
 
-            // Apply rotation to movement
+            // Apply rotation to movement (forward is negative Z in Three.js)
             const sin = Math.sin(state.rotation.y);
             const cos = Math.cos(state.rotation.y);
             
-            state.velocity.x += (moveX * cos - moveZ * sin) * speed;
-            state.velocity.z += (moveX * sin + moveZ * cos) * speed;
+            // Forward/back aligned with camera direction
+            state.velocity.x += (-moveZ * sin + moveX * cos) * speed;
+            state.velocity.z += (-moveZ * cos - moveX * sin) * speed;
 
             // Apply friction
             state.velocity.x *= state.friction;
