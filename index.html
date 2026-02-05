@@ -421,7 +421,14 @@
             this.grounded = false; this.facingRight = id === 1; this.lastShot = 0;
             this.reloading = false; this.reloadStart = 0; this.blocking = false;
             this.blockTime = 0; this.lastBlock = -10; this.cards = []; this.score = 0;
-            this.legPhase = 0; this.leftLeg = { angle: 0 }; this.rightLeg = { angle: 0 };
+            
+            // Leg physics (rendered locally, not synced)
+            this.legLength = 35;
+            this.leftLeg = { angle: 0, targetAngle: 0, angularVel: 0 };
+            this.rightLeg = { angle: 0, targetAngle: 0, angularVel: 0 };
+            this.legPhase = 0;
+            this.bodyShake = { x: 0, y: 0, targetX: 0, targetY: 0 };
+            this.lastVx = 0;
         }
         
         reset() {
@@ -479,18 +486,44 @@
             if (this.ammo <= 0 && !this.reloading) { this.reloading = true; this.reloadStart = now; }
             if (this.blocking && now - this.blockTime > 200) this.blocking = false;
             
-            // Legs
+            // Leg physics (local animation - not networked)
             const speed = Math.abs(this.vx);
-            if (speed > 0.5 && this.grounded) {
+            const moving = speed > 0.5;
+            
+            if (moving && this.grounded) {
                 this.legPhase += speed * 0.15;
-                this.leftLeg.angle = Math.sin(this.legPhase) * 0.6;
-                this.rightLeg.angle = Math.sin(this.legPhase + Math.PI) * 0.6;
+                this.leftLeg.targetAngle = Math.sin(this.legPhase) * 0.6;
+                this.rightLeg.targetAngle = Math.sin(this.legPhase + Math.PI) * 0.6;
             } else if (!this.grounded) {
-                this.leftLeg.angle = 0.3 + this.vy * 0.02;
-                this.rightLeg.angle = 0.2 + this.vy * 0.02;
+                this.leftLeg.targetAngle = 0.3 + this.vy * 0.02;
+                this.rightLeg.targetAngle = 0.2 + this.vy * 0.02;
             } else {
-                this.leftLeg.angle *= 0.9; this.rightLeg.angle *= 0.9;
+                this.leftLeg.targetAngle = 0.1;
+                this.rightLeg.targetAngle = -0.1;
             }
+            
+            // Leg spring physics
+            const legSpring = 0.3, legDamping = 0.7;
+            this.leftLeg.angularVel += (this.leftLeg.targetAngle - this.leftLeg.angle) * legSpring;
+            this.leftLeg.angularVel *= legDamping;
+            this.leftLeg.angle += this.leftLeg.angularVel;
+            
+            this.rightLeg.angularVel += (this.rightLeg.targetAngle - this.rightLeg.angle) * legSpring;
+            this.rightLeg.angularVel *= legDamping;
+            this.rightLeg.angle += this.rightLeg.angularVel;
+            
+            // Body shake based on acceleration
+            const accel = this.vx - this.lastVx;
+            this.lastVx = this.vx;
+            
+            this.bodyShake.targetX = -accel * 2 + (moving ? Math.sin(this.legPhase * 2) * speed * 0.3 : 0);
+            this.bodyShake.targetY = moving && this.grounded ? Math.abs(Math.sin(this.legPhase)) * 2 : 0;
+            
+            const shakeSpring = 0.4, shakeDamping = 0.75;
+            this.bodyShake.x += (this.bodyShake.targetX - this.bodyShake.x) * shakeSpring;
+            this.bodyShake.y += (this.bodyShake.targetY - this.bodyShake.y) * shakeSpring;
+            this.bodyShake.x *= shakeDamping;
+            this.bodyShake.y *= shakeDamping;
         }
         
         shoot(other, now, mouseTarget = null) {
@@ -534,10 +567,14 @@
         draw(mousePos = null) {
             ctx.save();
             
+            // Apply body shake offset
+            const drawX = this.x + this.bodyShake.x;
+            const drawY = this.y + this.bodyShake.y;
+            
             // Shield
             if (this.blocking) {
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius + 15, 0, Math.PI * 2);
+                ctx.arc(drawX, drawY, this.radius + 15, 0, Math.PI * 2);
                 ctx.strokeStyle = this.color;
                 ctx.lineWidth = 4;
                 ctx.globalAlpha = 0.6;
@@ -546,57 +583,115 @@
             }
             
             // Legs
-            const legLength = 35, legAttachY = this.y + this.radius * 0.5;
-            ctx.lineCap = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = this.color;
+            const legLength = this.legLength;
+            const legWidth = 3;
+            const legAttachY = drawY + this.radius * 0.5;
+            const legSpacing = this.radius * 0.3;
             
+            ctx.lineCap = 'round';
+            ctx.lineWidth = legWidth;
+            ctx.strokeStyle = this.color;
+            
+            // Left leg
             ctx.save();
-            ctx.translate(this.x - 8, legAttachY);
+            ctx.translate(drawX - legSpacing, legAttachY);
             ctx.rotate(this.leftLeg.angle);
-            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, legLength); ctx.stroke();
-            ctx.beginPath(); ctx.ellipse(0, legLength, 5, 3, 0, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, legLength);
+            ctx.stroke();
+            // Foot
+            ctx.beginPath();
+            ctx.ellipse(0, legLength, legWidth + 2, legWidth, 0, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
             ctx.restore();
+            
+            // Right leg
+            ctx.save();
+            ctx.translate(drawX + legSpacing, legAttachY);
+            ctx.rotate(this.rightLeg.angle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, legLength);
+            ctx.stroke();
+            // Foot
+            ctx.beginPath();
+            ctx.ellipse(0, legLength, legWidth + 2, legWidth, 0, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.restore();
+            
+            // Body with squash/stretch
+            const squash = 1 + this.bodyShake.y * 0.02;
+            const stretch = 1 - this.bodyShake.y * 0.01;
             
             ctx.save();
-            ctx.translate(this.x + 8, legAttachY);
-            ctx.rotate(this.rightLeg.angle);
-            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, legLength); ctx.stroke();
-            ctx.beginPath(); ctx.ellipse(0, legLength, 5, 3, 0, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill();
-            ctx.restore();
+            ctx.translate(drawX, drawY);
+            ctx.scale(stretch, squash);
             
-            // Body
+            // Main body
             ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
             ctx.fillStyle = this.color;
             ctx.fill();
             
+            // Body highlight
+            ctx.beginPath();
+            ctx.arc(-this.radius * 0.3, -this.radius * 0.3, this.radius * 0.3, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fill();
+            
+            ctx.restore();
+            
             // Gun angle
-            let gunAngle = mousePos && this.id === 1 ? Math.atan2(mousePos.y - this.y, mousePos.x - this.x) : (this.facingRight ? 0 : Math.PI);
+            let gunAngle;
+            if (mousePos && this.id === 1) {
+                gunAngle = Math.atan2(mousePos.y - drawY, mousePos.x - drawX);
+                this.facingRight = mousePos.x > this.x;
+            } else {
+                gunAngle = this.facingRight ? 0 : Math.PI;
+            }
             
             // Eye
-            const eyeX = this.x + Math.cos(gunAngle) * 8;
-            ctx.beginPath(); ctx.arc(eyeX, this.y - 5, 5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
-            ctx.beginPath(); ctx.arc(eyeX + Math.cos(gunAngle) * 2, this.y - 5 + Math.sin(gunAngle) * 2, 2, 0, Math.PI * 2);
-            ctx.fillStyle = '#000'; ctx.fill();
+            const eyeOffsetX = Math.cos(gunAngle) * 8;
+            const eyeOffsetY = Math.sin(gunAngle) * 4;
+            ctx.beginPath();
+            ctx.arc(drawX + eyeOffsetX, drawY - 5 + eyeOffsetY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            
+            // Pupil
+            ctx.beginPath();
+            ctx.arc(drawX + eyeOffsetX + Math.cos(gunAngle) * 2, drawY - 5 + eyeOffsetY + Math.sin(gunAngle) * 2, 2, 0, Math.PI * 2);
+            ctx.fillStyle = '#000';
+            ctx.fill();
             
             // Gun
             ctx.save();
-            ctx.translate(this.x, this.y);
+            ctx.translate(drawX, drawY);
             ctx.rotate(gunAngle);
             ctx.fillStyle = '#333';
             ctx.fillRect(this.radius - 5, -4, 25, 8);
+            ctx.fillStyle = '#555';
+            ctx.fillRect(this.radius - 5, -4, 25, 2);
             ctx.restore();
             
             // Health bar
-            const barW = 50, barH = 6, barX = this.x - barW / 2, barY = this.y - this.radius - 15;
-            ctx.fillStyle = '#333'; ctx.fillRect(barX, barY, barW, barH);
-            ctx.fillStyle = this.color; ctx.fillRect(barX, barY, barW * (this.health / this.maxHealth), barH);
+            const barW = 50, barH = 6, barX = this.x - barW / 2, barY = drawY - this.radius - 15;
+            ctx.fillStyle = '#333';
+            ctx.fillRect(barX, barY, barW, barH);
+            ctx.fillStyle = this.color;
+            ctx.fillRect(barX, barY, barW * (this.health / this.maxHealth), barH);
             
             // Reload indicator
             if (this.reloading) {
                 const progress = (Date.now() - this.reloadStart) / (this.reloadTime * 1000);
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius + 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
-                ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 3; ctx.stroke();
+                ctx.arc(drawX, drawY, this.radius + 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
+                ctx.strokeStyle = '#ffff00';
+                ctx.lineWidth = 3;
+                ctx.stroke();
             }
             
             ctx.restore();
@@ -882,7 +977,68 @@
             opponent.vx = opponentState.vx;
             opponent.vy = opponentState.vy;
             if (opponentState.h !== undefined) opponent.health = opponentState.h;
+            
+            // Update facing direction based on velocity
+            if (Math.abs(opponent.vx) > 0.5) {
+                opponent.facingRight = opponent.vx > 0;
+            }
         }
+        
+        // Run leg animation locally (based on interpolated velocity)
+        updateLegAnimation(opponent);
+    }
+    
+    // Update leg animation for a player (can be called for any player)
+    function updateLegAnimation(player) {
+        const speed = Math.abs(player.vx);
+        const moving = speed > 0.5;
+        
+        // Estimate grounded state from position
+        const feetOffset = player.radius * 0.5 + 35;
+        let grounded = false;
+        for (const p of platforms) {
+            if (player.x + player.radius > p.x && player.x - player.radius < p.x + p.w &&
+                Math.abs(player.y + feetOffset - p.y) < 5) {
+                grounded = true;
+                break;
+            }
+        }
+        if (player.y + feetOffset >= canvas.height - 5) grounded = true;
+        
+        if (moving && grounded) {
+            player.legPhase += speed * 0.15;
+            player.leftLeg.targetAngle = Math.sin(player.legPhase) * 0.6;
+            player.rightLeg.targetAngle = Math.sin(player.legPhase + Math.PI) * 0.6;
+        } else if (!grounded) {
+            player.leftLeg.targetAngle = 0.3 + player.vy * 0.02;
+            player.rightLeg.targetAngle = 0.2 + player.vy * 0.02;
+        } else {
+            player.leftLeg.targetAngle = 0.1;
+            player.rightLeg.targetAngle = -0.1;
+        }
+        
+        // Leg spring physics
+        const legSpring = 0.3, legDamping = 0.7;
+        player.leftLeg.angularVel += (player.leftLeg.targetAngle - player.leftLeg.angle) * legSpring;
+        player.leftLeg.angularVel *= legDamping;
+        player.leftLeg.angle += player.leftLeg.angularVel;
+        
+        player.rightLeg.angularVel += (player.rightLeg.targetAngle - player.rightLeg.angle) * legSpring;
+        player.rightLeg.angularVel *= legDamping;
+        player.rightLeg.angle += player.rightLeg.angularVel;
+        
+        // Body shake
+        const accel = player.vx - player.lastVx;
+        player.lastVx = player.vx;
+        
+        player.bodyShake.targetX = -accel * 2 + (moving ? Math.sin(player.legPhase * 2) * speed * 0.3 : 0);
+        player.bodyShake.targetY = moving && grounded ? Math.abs(Math.sin(player.legPhase)) * 2 : 0;
+        
+        const shakeSpring = 0.4, shakeDamping = 0.75;
+        player.bodyShake.x += (player.bodyShake.targetX - player.bodyShake.x) * shakeSpring;
+        player.bodyShake.y += (player.bodyShake.targetY - player.bodyShake.y) * shakeSpring;
+        player.bodyShake.x *= shakeDamping;
+        player.bodyShake.y *= shakeDamping;
     }
     
     // ==================== AI ====================
