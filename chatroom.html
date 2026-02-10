@@ -568,7 +568,7 @@
         function gameLoop() {
             requestAnimationFrame(gameLoop);
 
-            const speed = state.keys.shift ? 0.03 : 0.015;
+            const speed = state.keys.shift ? 0.03 : 0.0225;
             let mx = 0, mz = 0;
             if (state.isMobile && state.joystick.active) { mx = state.joystick.x; mz = state.joystick.y; }
             else { if (state.keys.w) mz--; if (state.keys.s) mz++; if (state.keys.a) mx--; if (state.keys.d) mx++; }
